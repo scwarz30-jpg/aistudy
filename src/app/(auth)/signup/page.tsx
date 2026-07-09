@@ -33,18 +33,24 @@ export default function SignupPage() {
       });
 
       if (error) {
-        setErrorMessage("회원가입에 실패했어요. 입력한 정보를 다시 확인해 주세요.");
+        setErrorMessage(
+          "We could not create your account. Double-check your details and try again.",
+        );
         return;
       }
 
       if (!data.session) {
-        setSuccessMessage("가입 신청이 완료되었어요. 이메일을 확인해 주세요.");
+        setSuccessMessage(
+          "Check your email to confirm the account request before continuing.",
+        );
         return;
       }
 
       router.replace("/onboarding");
     } catch {
-      setErrorMessage("회원가입 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.");
+      setErrorMessage(
+        "Something went wrong while creating the account. Please try again.",
+      );
     } finally {
       setIsPending(false);
     }
@@ -54,18 +60,19 @@ export default function SignupPage() {
     <main className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-6">
       <section className="w-full max-w-md rounded-lg border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm sm:p-8">
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-sky-600">회원가입</p>
+          <p className="text-sm font-semibold text-sky-600">Sign up</p>
           <h1 className="text-2xl font-semibold text-[var(--foreground)]">
-            건강 관리 시작하기
+            Start managing your health
           </h1>
           <p className="text-sm leading-6 text-[var(--muted)]">
-            이메일과 비밀번호를 등록한 뒤 바로 온보딩으로 이동합니다.
+            Create your account with an email address and password, then move
+            straight into onboarding.
           </p>
         </div>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <TextField
-            label="이메일"
+            label="Email"
             name="email"
             type="email"
             autoComplete="email"
@@ -73,35 +80,35 @@ export default function SignupPage() {
             required
           />
           <TextField
-            label="비밀번호"
+            label="Password"
             name="password"
             type="password"
             autoComplete="new-password"
-            placeholder="8자 이상"
+            placeholder="At least 8 characters"
             required
           />
 
           {successMessage ? (
-            <Notice tone="success" title="이메일을 확인해 주세요">
+            <Notice tone="success" title="Check your email">
               {successMessage}
             </Notice>
           ) : null}
 
           {errorMessage ? (
-            <Notice tone="error" title="가입에 실패했습니다">
+            <Notice tone="error" title="Sign-up failed">
               {errorMessage}
             </Notice>
           ) : null}
 
           <Button type="submit" pending={isPending}>
-            계정 만들기
+            Create account
           </Button>
         </form>
 
         <p className="mt-4 text-sm text-[var(--muted)]">
-          이미 계정이 있나요?{" "}
+          Already have an account?{" "}
           <Link className="font-semibold text-sky-600" href="/login">
-            로그인
+            Log in
           </Link>
         </p>
       </section>
