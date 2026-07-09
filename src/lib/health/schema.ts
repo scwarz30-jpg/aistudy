@@ -67,6 +67,110 @@ export const mealPlanSchema = z.object({
   days: z.array(mealPlanDaySchema).length(7),
 });
 
+function normalizeFoodName(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function containsExcludedFood(
+  value: string | null | undefined,
+  excludedFoods: string[],
+) {
+  if (!value) {
+    return false;
+  }
+
+  const normalizedValue = normalizeFoodName(value);
+
+  return excludedFoods.some((food) => normalizedValue.includes(food));
+}
+
+export function safeParseMealPlan(
+  input: unknown,
+  excludedFoods: string[] = [],
+) {
+  const result = mealPlanSchema.safeParse(input);
+
+  if (!result.success) {
+    return result;
+  }
+
+  const normalizedExcludedFoods = excludedFoods
+    .map(normalizeFoodName)
+    .filter(Boolean);
+
+  if (normalizedExcludedFoods.length === 0) {
+    const dayIndexIssues = buildMealPlanDayIndexIssues(result.data.days);
+
+    if (dayIndexIssues.length === 0) {
+      return result;
+    }
+
+    return {
+      success: false as const,
+      error: new z.ZodError(dayIndexIssues),
+    };
+  }
+
+  const dayIndexIssues = buildMealPlanDayIndexIssues(result.data.days);
+  const issuePaths = result.data.days.flatMap((day, dayPosition) => {
+    const mealFields = [
+      ["breakfast", day.breakfast.name],
+      ["breakfast", day.breakfast.description ?? undefined],
+      ["lunch", day.lunch.name],
+      ["lunch", day.lunch.description ?? undefined],
+      ["dinner", day.dinner.name],
+      ["dinner", day.dinner.description ?? undefined],
+      ["snack", day.snack?.name],
+      ["snack", day.snack?.description ?? undefined],
+    ] as const;
+
+    return mealFields
+      .filter(([, value]) =>
+        containsExcludedFood(value, normalizedExcludedFoods),
+      )
+      .map(([fieldName]) => ({
+        code: "custom" as const,
+        message: "Meal plan contains an excluded food.",
+        path: ["days", dayPosition, fieldName],
+      }));
+  });
+
+  const issues = [...dayIndexIssues, ...issuePaths];
+
+  if (issues.length === 0) {
+    return result;
+  }
+
+  return {
+    success: false as const,
+    error: new z.ZodError(issues),
+  };
+}
+
+function buildMealPlanDayIndexIssues(
+  days: Array<z.infer<typeof mealPlanDaySchema>>,
+) {
+  const dayIndexes = days.map((day) => day.dayIndex);
+  const uniqueIndexes = new Set(dayIndexes);
+
+  if (
+    uniqueIndexes.size === 7 &&
+    Array.from({ length: 7 }, (_, index) => index).every((index) =>
+      uniqueIndexes.has(index),
+    )
+  ) {
+    return [];
+  }
+
+  return [
+    {
+      code: "custom" as const,
+      message: "Meal plan must contain exactly one entry for each day index from 0 to 6.",
+      path: ["days"],
+    },
+  ];
+}
+
 export const guidanceCategorySchema = z.enum([
   "exercise",
   "lifestyle",
