@@ -66,7 +66,7 @@
 
 - [ ] **Step 1: Create the Next.js application files**
 
-Use `npm create next-app@latest . -- --ts --tailwind --eslint --app --src-dir --import-alias "@/*"` from `C:\Users\SeongMin\Documents\건강관리앱`. If the CLI asks to overwrite files, keep existing `docs/` and allow app config files to be created.
+Use `npm create next-app@latest . -- --ts --tailwind --eslint --app --src-dir --import-alias "@/*"` from the active worktree directory. If the CLI asks to overwrite files, keep existing `docs/` and allow app config files to be created.
 
 - [ ] **Step 2: Install runtime and test dependencies**
 
