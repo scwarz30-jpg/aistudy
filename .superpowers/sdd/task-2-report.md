@@ -67,3 +67,36 @@ Route (app)
 ## Concerns
 
 - The design spec listed required table fields but did not define exact scalar types for every column, so a few column types were inferred conservatively (`text`, `integer`, `jsonb`, `numeric`, and nullable fields where appropriate).
+
+## Review Fixes
+
+- Sealed cross-user references by adding composite ownership keys on `daily_checkins` and `meal_plans`, then switching `meal_plans`, `meal_plan_days`, and `guidance_items` to composite foreign keys that include `user_id`.
+- Kept nullable check-in source links by using partial `ON DELETE SET NULL (source_checkin_id)` on the composite foreign keys.
+- Updated `src/lib/supabase/types.ts` relationship metadata to match the new composite foreign keys.
+- Refactored `src/lib/supabase/server.ts` into a shared internal factory plus two explicit helpers:
+  - `createServerSupabaseClient()` for read contexts that ignores cookie write failures.
+  - `createServerActionSupabaseClient()` for server actions / route handlers where cookie writes should succeed or throw.
+
+## Review Fix Verification
+
+Commands run:
+
+```bash
+npm run build
+npm run lint
+```
+
+Relevant output:
+
+```text
+> health-webapp-implementation@0.1.0 build
+> next build
+
+▲ Next.js 16.2.10 (Turbopack)
+✓ Compiled successfully in 2.7s
+Finished TypeScript in 3.4s
+✓ Generating static pages using 5 workers (4/4) in 818ms
+
+> health-webapp-implementation@0.1.0 lint
+> eslint .
+```

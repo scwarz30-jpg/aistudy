@@ -41,7 +41,8 @@ create table public.daily_checkins (
   symptom_severity integer,
   water_intake integer,
   notes text,
-  created_at timestamptz not null default timezone('utc', now())
+  created_at timestamptz not null default timezone('utc', now()),
+  unique (user_id, id)
 );
 
 create table public.meal_plans (
@@ -49,16 +50,21 @@ create table public.meal_plans (
   user_id uuid not null references auth.users(id) on delete cascade,
   week_start_date date not null,
   source_profile_snapshot jsonb not null,
-  source_checkin_id uuid references public.daily_checkins(id) on delete set null,
+  source_checkin_id uuid,
   status text not null default 'active',
   created_at timestamptz not null default timezone('utc', now()),
-  updated_at timestamptz not null default timezone('utc', now())
+  updated_at timestamptz not null default timezone('utc', now()),
+  unique (user_id, id),
+  constraint meal_plans_source_checkin_user_id_fkey
+    foreign key (user_id, source_checkin_id)
+    references public.daily_checkins(user_id, id)
+    on delete set null (source_checkin_id)
 );
 
 create table public.meal_plan_days (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  meal_plan_id uuid not null references public.meal_plans(id) on delete cascade,
+  meal_plan_id uuid not null,
   day_index integer not null,
   date date not null,
   breakfast jsonb not null,
@@ -66,18 +72,26 @@ create table public.meal_plan_days (
   dinner jsonb not null,
   snack jsonb,
   explanation text,
+  constraint meal_plan_days_meal_plan_user_id_fkey
+    foreign key (user_id, meal_plan_id)
+    references public.meal_plans(user_id, id)
+    on delete cascade,
   unique (meal_plan_id, day_index)
 );
 
 create table public.guidance_items (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  source_checkin_id uuid references public.daily_checkins(id) on delete set null,
+  source_checkin_id uuid,
   category text not null,
   title text not null,
   content text not null,
   safety_notice text,
-  created_at timestamptz not null default timezone('utc', now())
+  created_at timestamptz not null default timezone('utc', now()),
+  constraint guidance_items_source_checkin_user_id_fkey
+    foreign key (user_id, source_checkin_id)
+    references public.daily_checkins(user_id, id)
+    on delete set null (source_checkin_id)
 );
 
 create index profiles_user_id_idx on public.profiles (user_id);

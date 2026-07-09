@@ -141,11 +141,11 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "meal_plans_source_checkin_id_fkey";
-            columns: ["source_checkin_id"];
+            foreignKeyName: "meal_plans_source_checkin_user_id_fkey";
+            columns: ["user_id", "source_checkin_id"];
             isOneToOne: false;
             referencedRelation: "daily_checkins";
-            referencedColumns: ["id"];
+            referencedColumns: ["user_id", "id"];
           },
         ];
       };
@@ -188,11 +188,11 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "meal_plan_days_meal_plan_id_fkey";
-            columns: ["meal_plan_id"];
+            foreignKeyName: "meal_plan_days_meal_plan_user_id_fkey";
+            columns: ["user_id", "meal_plan_id"];
             isOneToOne: false;
             referencedRelation: "meal_plans";
-            referencedColumns: ["id"];
+            referencedColumns: ["user_id", "id"];
           },
         ];
       };
@@ -229,11 +229,11 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "guidance_items_source_checkin_id_fkey";
-            columns: ["source_checkin_id"];
+            foreignKeyName: "guidance_items_source_checkin_user_id_fkey";
+            columns: ["user_id", "source_checkin_id"];
             isOneToOne: false;
             referencedRelation: "daily_checkins";
-            referencedColumns: ["id"];
+            referencedColumns: ["user_id", "id"];
           },
         ];
       };
