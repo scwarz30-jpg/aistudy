@@ -41,3 +41,14 @@ test("onboarding shows the health disclaimer copy", async ({ page }) => {
     ),
   ).toBeVisible();
 });
+
+test("daily check-in shows the safety notice copy", async ({ page }) => {
+  await page.goto("/check-in");
+
+  await expect(page.getByText("Safety notice")).toBeVisible();
+  await expect(
+    page.getByText(
+      "This tool helps with daily tracking. Severe symptoms, breathing problems, chest pain, or heavy bleeding should be handled with professional care first.",
+    ),
+  ).toBeVisible();
+});

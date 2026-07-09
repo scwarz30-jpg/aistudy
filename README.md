@@ -55,7 +55,7 @@ Next.js web app for sign-up, onboarding, daily health check-ins, meal-plan gener
 
 ## Run the database migration
 
-Apply [`supabase/migrations/0001_initial_schema.sql`](/C:/Users/SeongMin/Documents/건강관리앱/.worktrees/health-webapp-implementation/supabase/migrations/0001_initial_schema.sql) with one of these options:
+Apply `supabase/migrations/0001_initial_schema.sql` with one of these options:
 
 - Supabase CLI:
 
@@ -124,5 +124,5 @@ The Playwright config starts the app with `npm run dev` and runs specs from `tes
 ## Deployment notes
 
 - Do not commit secrets to the repo or `vercel.json`.
-- The checked-in [`vercel.json`](/C:/Users/SeongMin/Documents/건강관리앱/.worktrees/health-webapp-implementation/vercel.json) only declares the Next.js framework.
+- The checked-in `vercel.json` only declares the Next.js framework.
 - Some older screens still contain garbled legacy copy outside the signup/onboarding flow; treat that as follow-up polish, not deployment config.

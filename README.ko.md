@@ -55,7 +55,7 @@ Supabase를 기반으로 회원가입, 온보딩, 일일 체크인, 식단 생�
 
 ## 마이그레이션 적용
 
-[`supabase/migrations/0001_initial_schema.sql`](/C:/Users/SeongMin/Documents/건강관리앱/.worktrees/health-webapp-implementation/supabase/migrations/0001_initial_schema.sql) 을 아래 방법 중 하나로 적용합니다.
+`supabase/migrations/0001_initial_schema.sql` 을 아래 방법 중 하나로 적용합니다.
 
 - Supabase CLI 사용:
 
@@ -124,5 +124,5 @@ Playwright 설정은 `npm run dev`로 앱을 띄우고 `tests/e2e` 아래 스펙
 ## 배포 메모
 
 - 비밀 값은 저장소나 `vercel.json`에 커밋하지 않습니다.
-- 체크인된 [`vercel.json`](/C:/Users/SeongMin/Documents/건강관리앱/.worktrees/health-webapp-implementation/vercel.json) 은 Next.js 프레임워크 선언만 포함합니다.
+- 체크인된 `vercel.json` 은 Next.js 프레임워크 선언만 포함합니다.
 - 회원가입/온보딩 외의 일부 오래된 화면에는 깨진 레거시 문구가 남아 있을 수 있으며, 이는 배포 설정 이슈가 아니라 후속 UI 정리 항목입니다.
