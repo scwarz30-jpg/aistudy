@@ -92,3 +92,53 @@ Observed responses:
 ## Concerns
 
 - Login and onboarding currently redirect to `/dashboard`, but Task 4 did not include creating that route. The redirects match the brief, though the destination will depend on a later task.
+
+---
+
+## Task 4 Review Fixes
+
+### Status
+
+Completed follow-up fixes for the Task 4 review findings in the auth and onboarding flows.
+
+### Commands Run And Output
+
+1. Find focused tests for the touched pages
+
+```text
+rg --files . | rg "(test|spec)\.(ts|tsx|js|jsx)$"
+Exit code: 1
+Result: no focused test files covering signup, login, or onboarding were present in this worktree.
+```
+
+2. Lint
+
+```text
+npm run lint
+Exit code: 0
+Result: eslint completed with no reported errors.
+```
+
+3. Production build
+
+```text
+npm run build
+Exit code: 0
+Result: Next.js build passed.
+Routes generated:
+- /
+- /login
+- /onboarding
+- /signup
+```
+
+### Fix Summary
+
+- Updated `src/app/(auth)/signup/page.tsx` to branch on `signUp` session presence, show a Korean email-confirmation success notice when no session is returned, and avoid redirecting in that case.
+- Updated signup, login, and onboarding submit handlers to use `try/catch/finally`, keep pending state from getting stuck, and surface Korean fallback error messages when calls throw.
+
+### Changed Files
+
+- `src/app/(auth)/signup/page.tsx`
+- `src/app/(auth)/login/page.tsx`
+- `src/app/onboarding/page.tsx`

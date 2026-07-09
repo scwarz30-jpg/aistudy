@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
 import { saveProfile, type SaveProfileResult } from "@/app/actions/profile";
 import { Button } from "@/components/ui/Button";
@@ -13,20 +13,29 @@ const initialResult: SaveProfileResult | null = null;
 export default function OnboardingPage() {
   const router = useRouter();
   const [result, setResult] = useState<SaveProfileResult | null>(initialResult);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    setResult(null);
+    setIsPending(true);
 
-    startTransition(async () => {
+    try {
+      const formData = new FormData(event.currentTarget);
       const nextResult = await saveProfile(formData);
       setResult(nextResult);
 
       if (nextResult.ok) {
         router.replace("/dashboard");
       }
-    });
+    } catch {
+      setResult({
+        ok: false,
+        message: "온보딩 정보를 저장하는 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.",
+      });
+    } finally {
+      setIsPending(false);
+    }
   }
 
   return (

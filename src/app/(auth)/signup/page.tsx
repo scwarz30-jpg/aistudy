@@ -12,31 +12,42 @@ import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 export default function SignupPage() {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMessage(null);
+    setSuccessMessage(null);
     setIsPending(true);
 
-    const formData = new FormData(event.currentTarget);
-    const email = formData.get("email");
-    const password = formData.get("password");
+    try {
+      const formData = new FormData(event.currentTarget);
+      const email = formData.get("email");
+      const password = formData.get("password");
 
-    const supabase = createBrowserSupabaseClient();
-    const { error } = await supabase.auth.signUp({
-      email: typeof email === "string" ? email : "",
-      password: typeof password === "string" ? password : "",
-    });
+      const supabase = createBrowserSupabaseClient();
+      const { data, error } = await supabase.auth.signUp({
+        email: typeof email === "string" ? email : "",
+        password: typeof password === "string" ? password : "",
+      });
 
-    setIsPending(false);
+      if (error) {
+        setErrorMessage("회원가입에 실패했어요. 입력한 정보를 다시 확인해 주세요.");
+        return;
+      }
 
-    if (error) {
-      setErrorMessage(error.message);
-      return;
+      if (!data.session) {
+        setSuccessMessage("가입 신청이 완료되었어요. 이메일을 확인해 주세요.");
+        return;
+      }
+
+      router.replace("/onboarding");
+    } catch {
+      setErrorMessage("회원가입 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setIsPending(false);
     }
-
-    router.replace("/onboarding");
   }
 
   return (
@@ -69,6 +80,12 @@ export default function SignupPage() {
             placeholder="8자 이상"
             required
           />
+
+          {successMessage ? (
+            <Notice tone="success" title="이메일을 확인해 주세요">
+              {successMessage}
+            </Notice>
+          ) : null}
 
           {errorMessage ? (
             <Notice tone="error" title="가입에 실패했습니다">

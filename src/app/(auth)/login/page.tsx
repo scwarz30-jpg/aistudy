@@ -19,24 +19,28 @@ export default function LoginPage() {
     setErrorMessage(null);
     setIsPending(true);
 
-    const formData = new FormData(event.currentTarget);
-    const email = formData.get("email");
-    const password = formData.get("password");
+    try {
+      const formData = new FormData(event.currentTarget);
+      const email = formData.get("email");
+      const password = formData.get("password");
 
-    const supabase = createBrowserSupabaseClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: typeof email === "string" ? email : "",
-      password: typeof password === "string" ? password : "",
-    });
+      const supabase = createBrowserSupabaseClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: typeof email === "string" ? email : "",
+        password: typeof password === "string" ? password : "",
+      });
 
-    setIsPending(false);
+      if (error) {
+        setErrorMessage("로그인에 실패했어요. 이메일과 비밀번호를 다시 확인해 주세요.");
+        return;
+      }
 
-    if (error) {
-      setErrorMessage(error.message);
-      return;
+      router.replace("/dashboard");
+    } catch {
+      setErrorMessage("로그인 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setIsPending(false);
     }
-
-    router.replace("/dashboard");
   }
 
   return (
