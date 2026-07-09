@@ -2,6 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const authGetUser = vi.fn();
 const from = vi.fn();
+const revalidatePath = vi.fn();
+
+vi.mock("next/cache", () => ({
+  revalidatePath,
+}));
 
 vi.mock("@/lib/supabase/server", () => ({
   createServerActionSupabaseClient: vi.fn(async () => ({
@@ -16,6 +21,7 @@ describe("saveProfile", () => {
   beforeEach(() => {
     authGetUser.mockReset();
     from.mockReset();
+    revalidatePath.mockReset();
   });
 
   it("returns an error when there is no authenticated user", async () => {
@@ -83,7 +89,7 @@ describe("saveProfile", () => {
     formData.set("weightGoal", "maintain");
     formData.set("healthConcerns", "피로, 소화");
     formData.set("currentCondition", "수면이 조금 부족해요");
-    formData.set("favoriteFoods", "연어\n두부");
+    formData.set("favoriteFoods", "연어\n현미밥");
     formData.set("avoidedFoods", "땅콩");
     formData.set("allergies", "새우, 복숭아");
 
@@ -100,7 +106,7 @@ describe("saveProfile", () => {
         weight_goal: "maintain",
         health_concerns: ["피로", "소화"],
         current_condition: "수면이 조금 부족해요",
-        favorite_foods: ["연어", "두부"],
+        favorite_foods: ["연어", "현미밥"],
         avoided_foods: ["땅콩"],
         allergies: ["새우", "복숭아"],
       },
@@ -108,6 +114,10 @@ describe("saveProfile", () => {
         onConflict: "user_id",
       },
     );
+    expect(revalidatePath).toHaveBeenCalledWith("/dashboard");
+    expect(revalidatePath).toHaveBeenCalledWith("/guidance");
+    expect(revalidatePath).toHaveBeenCalledWith("/meal-plan");
+    expect(revalidatePath).toHaveBeenCalledWith("/profile");
     expect(result).toEqual({ ok: true });
   });
 });

@@ -202,7 +202,9 @@ export async function regenerateMealPlan(): Promise<
     const { mealPlanId } = await generateWeeklyMealPlan(data.user.id);
 
     revalidatePath("/dashboard");
+    revalidatePath("/guidance");
     revalidatePath("/meal-plan");
+    revalidatePath("/profile");
 
     return {
       ok: true,

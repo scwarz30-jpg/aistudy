@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { profileSchema } from "@/lib/health/schema";
 import { createServerActionSupabaseClient } from "@/lib/supabase/server";
 
@@ -90,6 +92,11 @@ export async function saveProfile(
       message: "프로필 저장 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.",
     };
   }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/guidance");
+  revalidatePath("/meal-plan");
+  revalidatePath("/profile");
 
   return { ok: true };
 }
