@@ -7,8 +7,9 @@ import { requiresProfessionalCare } from "@/lib/health/rules";
 import { createServerActionSupabaseClient } from "@/lib/supabase/server";
 
 export type SaveDailyCheckinResult =
-  | { ok: true }
-  | { ok: false; message: string };
+  | { ok: true; status: "saved" }
+  | { ok: true; status: "saved_with_warning"; message: string }
+  | { ok: false; status: "error"; message: string };
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -54,6 +55,7 @@ export async function saveDailyCheckin(
   if (userError || !data.user) {
     return {
       ok: false,
+      status: "error",
       message: "로그인이 필요합니다.",
     };
   }
@@ -74,6 +76,7 @@ export async function saveDailyCheckin(
   if (!parsed.success) {
     return {
       ok: false,
+      status: "error",
       message: "입력한 체크인 정보를 다시 확인해 주세요.",
     };
   }
@@ -95,6 +98,7 @@ export async function saveDailyCheckin(
   if (error) {
     return {
       ok: false,
+      status: "error",
       message: "체크인을 저장하는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.",
     };
   }
@@ -104,11 +108,12 @@ export async function saveDailyCheckin(
 
   if (requiresProfessionalCare(parsed.data)) {
     return {
-      ok: false,
+      ok: true,
+      status: "saved_with_warning",
       message:
         "체크인은 저장되었어요. 증상이 심하거나 응급 신호가 보여서 오늘은 식단 조정보다 병원이나 전문가 상담을 우선해 주세요.",
     };
   }
 
-  return { ok: true };
+  return { ok: true, status: "saved" };
 }

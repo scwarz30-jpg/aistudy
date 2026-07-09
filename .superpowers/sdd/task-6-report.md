@@ -81,3 +81,92 @@ Result:
 
 - The action result interface only allows `{ ok: true }` or `{ ok: false; message: string }`, so urgent-but-saved check-ins are represented through the `ok: false` branch with a saved-state warning message.
 - There are no dedicated unit tests yet for the new `saveDailyCheckin` action itself because the task brief only required extending `tests/unit/health-rules.test.ts`.
+
+---
+
+## Task 6 Review Fixes
+
+### Scope
+
+- Updated the check-in action/client contract so urgent saved check-ins return an explicit saved-with-warning state.
+- Prevented stale latest check-ins from driving the dashboard's today-specific adjustment notice.
+- Removed localized string-prefix matching from the client flow.
+- Added focused regression tests for the action contract and dashboard today-checkin gating.
+
+### Additional Commands Run
+
+#### 1. Urgent check-in action regression test
+
+Command:
+
+```bash
+npm run test -- tests/unit/checkins-action.test.ts
+```
+
+Result:
+
+- Exit code: `0`
+- `1` test file passed
+- `2` tests passed
+
+#### 2. Dashboard today-checkin regression test
+
+Command:
+
+```bash
+npm run test -- tests/unit/dashboard-page.test.ts
+```
+
+Result:
+
+- Exit code: `0`
+- `1` test file passed
+- `3` tests passed
+
+#### 3. Required health rules test
+
+Command:
+
+```bash
+npm run test -- tests/unit/health-rules.test.ts
+```
+
+Result:
+
+- Exit code: `0`
+- `1` test file passed
+- `9` tests passed
+
+#### 4. Required lint
+
+Command:
+
+```bash
+npm run lint
+```
+
+Result:
+
+- Exit code: `0`
+- ESLint completed without reported errors
+
+#### 5. Required production build
+
+Command:
+
+```bash
+npm run build
+```
+
+Result:
+
+- Exit code: `0`
+- Next.js production build compiled successfully
+- TypeScript type check completed successfully
+- Generated routes included `/check-in`, `/dashboard`, `/meal-plan`, `/onboarding`, `/login`, and `/signup`
+
+### Notes
+
+- `saveDailyCheckin` now returns `{ ok: true, status: "saved_with_warning", message }` for urgent check-ins that were successfully persisted.
+- The check-in page now branches on `status`, not localized message text, and swaps the form for a saved-state navigation card after an urgent saved submission.
+- The dashboard only derives today-specific adjustment guidance from a check-in whose Seoul date matches today; older check-ins still remain visible as the latest history entry.

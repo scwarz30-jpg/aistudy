@@ -51,16 +51,13 @@ function buildScoreOptions() {
 
     return {
       value,
-      label: `${value}점`,
+      label: `${value}/10`,
     };
   });
 }
 
 const scoreOptions = buildScoreOptions();
-const symptomSeverityOptions = [
-  { value: "0", label: "0점" },
-  ...scoreOptions,
-];
+const symptomSeverityOptions = [{ value: "0", label: "0/10" }, ...scoreOptions];
 
 export default function CheckInPage() {
   const router = useRouter();
@@ -81,23 +78,22 @@ export default function CheckInPage() {
 
       setResult(nextResult);
 
-      if (nextResult.ok) {
+      if (nextResult.ok && nextResult.status === "saved") {
         router.replace("/dashboard");
       }
     } catch {
       setResult({
         ok: false,
-        message: "체크인을 저장하는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+        status: "error",
+        message: "We could not save this check-in. Please try again.",
       });
     } finally {
       setIsPending(false);
     }
   }
 
-  const isProfessionalCareNotice =
-    result &&
-    !result.ok &&
-    result.message.startsWith("체크인은 저장되었어요.");
+  const hasSavedWarning =
+    result?.ok === true && result.status === "saved_with_warning";
 
   return (
     <main className="px-4 py-6 sm:px-6 sm:py-10">
@@ -107,150 +103,179 @@ export default function CheckInPage() {
             Daily Check-In
           </p>
           <h1 className="text-3xl font-semibold text-[var(--foreground)]">
-            오늘 컨디션을 빠르게 기록해 보세요
+            Log today&apos;s health status
           </h1>
           <p className="max-w-2xl text-sm leading-6 text-[var(--muted)]">
-            기본 항목만 먼저 입력하고, 필요할 때만 상세 메모를 더해도 충분해요.
+            Capture the basics first, then add symptoms or notes if you need
+            more detail.
           </p>
         </div>
 
-        <Notice tone="warning" title="안전 안내">
-          이 체크인은 일상적인 건강 기록용입니다. 흉통, 호흡곤란, 심한 출혈처럼
-          응급 신호가 있거나 증상이 심하면 식단 조정보다 전문 진료를 먼저 받아
-          주세요.
+        <Notice tone="warning" title="Safety notice">
+          This tool helps with daily tracking. Severe symptoms, breathing
+          problems, chest pain, or heavy bleeding should be handled with
+          professional care first.
         </Notice>
 
-        {result && !result.ok ? (
+        {result && "message" in result ? (
           <Notice
-            tone={isProfessionalCareNotice ? "warning" : "error"}
-            title={isProfessionalCareNotice ? "전문가 상담 권장" : "저장 실패"}
+            tone={result.ok ? "warning" : "error"}
+            title={result.ok ? "Professional care recommended" : "Save failed"}
           >
             {result.message}
           </Notice>
         ) : null}
 
-        <form
-          className="space-y-6 rounded-lg border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm sm:p-8"
-          onSubmit={handleSubmit}
-        >
-          <section className="space-y-4">
-            <div className="space-y-1">
+        {hasSavedWarning ? (
+          <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm sm:p-8">
+            <div className="space-y-3">
               <h2 className="text-xl font-semibold text-[var(--foreground)]">
-                빠른 체크
+                Check-in saved
               </h2>
               <p className="text-sm leading-6 text-[var(--muted)]">
-                오늘 상태를 한 번에 파악할 수 있는 핵심 항목이에요.
+                Your urgent check-in was saved. Move to the dashboard or meal
+                plan instead of submitting this entry again.
               </p>
             </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SelectField
-                label="전반적인 컨디션"
-                name="conditionScore"
-                defaultValue="5"
-                options={scoreOptions}
-              />
-              <SelectField
-                label="수면 만족도"
-                name="sleepQuality"
-                defaultValue="5"
-                options={scoreOptions}
-              />
-              <SelectField
-                label="스트레스 수준"
-                name="stressLevel"
-                defaultValue="5"
-                options={scoreOptions}
-              />
-              <SelectField
-                label="증상 강도"
-                name="symptomSeverity"
-                defaultValue="0"
-                options={symptomSeverityOptions}
-              />
-              <SelectField
-                label="식욕"
-                name="appetite"
-                defaultValue=""
-                options={[
-                  { value: "", label: "선택 안 함" },
-                  { value: "normal", label: "보통" },
-                  { value: "low", label: "낮음" },
-                  { value: "high", label: "높음" },
-                ]}
-              />
-              <SelectField
-                label="소화 상태"
-                name="digestion"
-                defaultValue=""
-                options={[
-                  { value: "", label: "선택 안 함" },
-                  { value: "normal", label: "편안함" },
-                  { value: "bloated", label: "더부룩함" },
-                  { value: "sensitive", label: "예민함" },
-                  { value: "upset", label: "불편함" },
-                ]}
-              />
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/dashboard"
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-500"
+              >
+                Go to dashboard
+              </Link>
+              <Link
+                href="/meal-plan"
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:bg-white"
+              >
+                View meal plan
+              </Link>
             </div>
-
-            <label className="flex items-start gap-3 rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)]">
-              <input
-                type="checkbox"
-                name="exercisedToday"
-                className="mt-1 h-4 w-4 rounded border-[var(--border)] text-sky-600 focus:ring-sky-500"
-              />
-              <span className="leading-6">
-                오늘 운동했어요. 가벼운 산책부터 본운동까지 모두 포함해요.
-              </span>
-            </label>
           </section>
+        ) : (
+          <form
+            className="space-y-6 rounded-lg border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm sm:p-8"
+            onSubmit={handleSubmit}
+          >
+            <section className="space-y-4">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold text-[var(--foreground)]">
+                  Quick check
+                </h2>
+                <p className="text-sm leading-6 text-[var(--muted)]">
+                  Record the signals that best describe how you feel today.
+                </p>
+              </div>
 
-          <details className="rounded-lg border border-[var(--border)] bg-[var(--background)]">
-            <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-[var(--foreground)]">
-              상세 메모 열기
-            </summary>
-            <div className="grid gap-4 border-t border-[var(--border)] px-4 py-4 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <TextField
-                  label="세부 증상"
-                  name="symptoms"
-                  textarea
-                  placeholder="예: 두통, 속쓰림, 어지러움"
-                  hint="쉼표나 줄바꿈으로 여러 항목을 적을 수 있어요."
+              <div className="grid gap-4 sm:grid-cols-2">
+                <SelectField
+                  label="Condition score"
+                  name="conditionScore"
+                  defaultValue="5"
+                  options={scoreOptions}
+                />
+                <SelectField
+                  label="Sleep quality"
+                  name="sleepQuality"
+                  defaultValue="5"
+                  options={scoreOptions}
+                />
+                <SelectField
+                  label="Stress level"
+                  name="stressLevel"
+                  defaultValue="5"
+                  options={scoreOptions}
+                />
+                <SelectField
+                  label="Symptom severity"
+                  name="symptomSeverity"
+                  defaultValue="0"
+                  options={symptomSeverityOptions}
+                />
+                <SelectField
+                  label="Appetite"
+                  name="appetite"
+                  defaultValue=""
+                  options={[
+                    { value: "", label: "Select" },
+                    { value: "normal", label: "Normal" },
+                    { value: "low", label: "Low" },
+                    { value: "high", label: "High" },
+                  ]}
+                />
+                <SelectField
+                  label="Digestion"
+                  name="digestion"
+                  defaultValue=""
+                  options={[
+                    { value: "", label: "Select" },
+                    { value: "normal", label: "Normal" },
+                    { value: "bloated", label: "Bloated" },
+                    { value: "sensitive", label: "Sensitive" },
+                    { value: "upset", label: "Upset" },
+                  ]}
                 />
               </div>
-              <TextField
-                label="물 섭취 컵 수"
-                name="waterIntake"
-                type="number"
-                inputMode="numeric"
-                min="0"
-                step="1"
-                placeholder="6"
-              />
-              <div className="sm:col-span-2">
-                <TextField
-                  label="메모"
-                  name="notes"
-                  textarea
-                  placeholder="불편한 시점, 식사 반응, 병원 방문 예정 등을 자유롭게 남겨 주세요."
+
+              <label className="flex items-start gap-3 rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)]">
+                <input
+                  type="checkbox"
+                  name="exercisedToday"
+                  className="mt-1 h-4 w-4 rounded border-[var(--border)] text-sky-600 focus:ring-sky-500"
                 />
+                <span className="leading-6">
+                  I exercised today, even if it was light movement.
+                </span>
+              </label>
+            </section>
+
+            <details className="rounded-lg border border-[var(--border)] bg-[var(--background)]">
+              <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-[var(--foreground)]">
+                Add more detail
+              </summary>
+              <div className="grid gap-4 border-t border-[var(--border)] px-4 py-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <TextField
+                    label="Symptoms"
+                    name="symptoms"
+                    textarea
+                    placeholder="Headache, dizziness, nausea"
+                    hint="Separate items with commas or new lines."
+                  />
+                </div>
+                <TextField
+                  label="Water intake (cups)"
+                  name="waterIntake"
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  step="1"
+                  placeholder="6"
+                />
+                <div className="sm:col-span-2">
+                  <TextField
+                    label="Notes"
+                    name="notes"
+                    textarea
+                    placeholder="Share timing, food reactions, or care plans."
+                  />
+                </div>
               </div>
+            </details>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button type="submit" pending={isPending}>
+                Save check-in
+              </Button>
+              <Link
+                href="/dashboard"
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:bg-white"
+              >
+                Back to dashboard
+              </Link>
             </div>
-          </details>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button type="submit" pending={isPending}>
-              체크인 저장하기
-            </Button>
-            <Link
-              href="/dashboard"
-              className="inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:bg-white"
-            >
-              대시보드로 돌아가기
-            </Link>
-          </div>
-        </form>
+          </form>
+        )}
       </section>
     </main>
   );

@@ -74,7 +74,7 @@ function getMealName(value: Json) {
   return typeof value.name === "string" ? value.name : "미정";
 }
 
-function buildAdjustmentNotice(
+export function buildAdjustmentNotice(
   profile: ProfileRow | null,
   latestCheckin: DailyCheckinRow | null,
 ) {
@@ -168,6 +168,19 @@ function buildAdjustmentNotice(
   };
 }
 
+export function getTodayCheckin(
+  latestCheckin: DailyCheckinRow | null,
+  todayDate: string,
+) {
+  if (!latestCheckin) {
+    return null;
+  }
+
+  return getDateStringInSeoul(new Date(latestCheckin.created_at)) === todayDate
+    ? latestCheckin
+    : null;
+}
+
 async function loadLatestMealPlanDays(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
   userId: string,
@@ -245,12 +258,11 @@ export default async function DashboardPage() {
     latestMealPlan?.id ?? null,
   );
   const todayDate = getDateStringInSeoul(new Date());
-  const hasCheckedInToday =
-    latestCheckin !== null &&
-    getDateStringInSeoul(new Date(latestCheckin.created_at)) === todayDate;
+  const todayCheckin = getTodayCheckin(latestCheckin, todayDate);
+  const hasCheckedInToday = todayCheckin !== null;
   const todayPlanDay =
     mealPlanDays.find((day) => day.date === todayDate) ?? mealPlanDays[0] ?? null;
-  const adjustmentNotice = buildAdjustmentNotice(profile, latestCheckin);
+  const adjustmentNotice = buildAdjustmentNotice(profile, todayCheckin);
 
   return (
     <main className="px-4 py-6 sm:px-6 sm:py-10">
