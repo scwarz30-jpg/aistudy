@@ -40,15 +40,15 @@ export function calculateBmi(heightCm: number, weightKg: number) {
   const rawValue = weightKg / (heightMeters * heightMeters);
   const value = Math.round(rawValue * 10) / 10;
 
-  if (value < 18.5) {
+  if (rawValue < 18.5) {
     return { value, category: "underweight" as const };
   }
 
-  if (value < 25) {
+  if (rawValue < 25) {
     return { value, category: "normal" as const };
   }
 
-  if (value < 30) {
+  if (rawValue < 30) {
     return { value, category: "overweight" as const };
   }
 

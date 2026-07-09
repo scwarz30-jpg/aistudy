@@ -28,6 +28,25 @@ describe("calculateBmi", () => {
       category: "obese",
     });
   });
+
+  it("classifies using the raw bmi before rounding for display", () => {
+    expect(calculateBmi(170, 72.1344)).toEqual({
+      value: 25,
+      category: "normal",
+    });
+  });
+
+  it("uses threshold values for category transitions", () => {
+    expect(calculateBmi(170, 72.25)).toEqual({
+      value: 25,
+      category: "overweight",
+    });
+
+    expect(calculateBmi(170, 53.465)).toEqual({
+      value: 18.5,
+      category: "normal",
+    });
+  });
 });
 
 describe("buildFoodConstraints", () => {
