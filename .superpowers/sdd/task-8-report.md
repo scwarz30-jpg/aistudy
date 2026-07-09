@@ -51,3 +51,26 @@ Completed.
 - There is no `VERCEL_TOKEN` configured.
 - There is no `.vercel/project.json` linking this worktree to a Vercel project.
 - Required follow-up: authenticate with Vercel via login or token and link the project before a real deployment can be executed.
+
+## 2026-07-10 README Korean Encoding Fix Addendum
+
+### Review finding addressed
+
+- Rewrote `README.ko.md` as readable UTF-8 Korean documentation covering local setup, environment variables, Supabase setup, migration, development server usage, tests, and Vercel deployment.
+- Documented the current Vercel deployment blocker honestly: deployment still requires Vercel authentication or token setup plus a linked Vercel project before any deployment URL can exist.
+
+### Commands run
+
+- UTF-8 validation
+  - Command: PowerShell UTF-8 read of `README.ko.md` with checks for replacement characters and known mojibake markers
+  - Result: passed
+  - Summary: `UTF8_CHECK=PASS`
+- `npm run test:e2e`
+  - Result: passed
+  - Summary: `5 passed (13.0s)`
+- `npm run test`
+  - Result: passed
+  - Summary: `9` files, `31` tests passed
+- `npm run build`
+  - Result: passed
+  - Summary: Next.js production build completed successfully
