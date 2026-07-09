@@ -3,8 +3,13 @@
 import { revalidatePath } from "next/cache";
 
 import { generateStructuredMealPlan } from "@/lib/ai/generate";
+import { getSeoulWeekStartDate } from "@/lib/date/seoul";
 import { profileSchema, safeParseMealPlan } from "@/lib/health/schema";
-import { buildFoodConstraints, calculateBmi } from "@/lib/health/rules";
+import {
+  buildFoodConstraints,
+  calculateBmi,
+  requiresProfessionalCare,
+} from "@/lib/health/rules";
 import { createServerActionSupabaseClient } from "@/lib/supabase/server";
 import type { Database, Json } from "@/lib/supabase/types";
 
@@ -15,17 +20,6 @@ function asStringArray(value: Json) {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
     : [];
-}
-
-function getCurrentWeekStartDate() {
-  const now = new Date();
-  const utcDate = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  );
-  const dayOfWeek = utcDate.getUTCDay();
-  const diffToMonday = (dayOfWeek + 6) % 7;
-  utcDate.setUTCDate(utcDate.getUTCDate() - diffToMonday);
-  return utcDate.toISOString().slice(0, 10);
 }
 
 function mapProfileRowToInput(row: ProfileRow) {
@@ -101,9 +95,15 @@ export async function generateWeeklyMealPlan(
 
   const latestCheckinRow = latestCheckins?.[0] ?? null;
   const latestCheckin = mapCheckinRowToInput(latestCheckinRow);
+  if (latestCheckin && requiresProfessionalCare(latestCheckin)) {
+    throw new Error(
+      "Your latest check-in needs professional follow-up before generating a new meal plan.",
+    );
+  }
+
   const foodConstraints = buildFoodConstraints(parsedProfile.data);
   const bmi = calculateBmi(parsedProfile.data.heightCm, parsedProfile.data.weightKg);
-  const weekStartDate = getCurrentWeekStartDate();
+  const weekStartDate = getSeoulWeekStartDate(new Date());
 
   const generatedMealPlan = await generateStructuredMealPlan({
     weekStartDate,

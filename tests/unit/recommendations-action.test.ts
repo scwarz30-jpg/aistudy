@@ -1,6 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const authGetUser = vi.fn();
+const generateStructuredMealPlan = vi.fn(async (input) => ({
+  weekStartDate: input.weekStartDate,
+  status: "active",
+  sourceProfileSnapshot: input.sourceProfileSnapshot,
+  sourceCheckinId: input.sourceCheckinId,
+  days: Array.from({ length: 7 }, (_, dayIndex) => ({
+    dayIndex,
+    date: `2026-07-${String(dayIndex + 6).padStart(2, "0")}`,
+    breakfast: { name: `Breakfast ${dayIndex + 1}` },
+    lunch: { name: `Lunch ${dayIndex + 1}` },
+    dinner: { name: `Dinner ${dayIndex + 1}` },
+    snack: null,
+    explanation: "Balanced meals",
+  })),
+}));
+
 const profileChain = {
   select: vi.fn(),
   eq: vi.fn(),
@@ -51,21 +67,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 vi.mock("@/lib/ai/generate", () => ({
-  generateStructuredMealPlan: vi.fn(async (input) => ({
-    weekStartDate: input.weekStartDate,
-    status: "active",
-    sourceProfileSnapshot: input.sourceProfileSnapshot,
-    sourceCheckinId: input.sourceCheckinId,
-    days: Array.from({ length: 7 }, (_, dayIndex) => ({
-      dayIndex,
-      date: `2026-07-${String(dayIndex + 6).padStart(2, "0")}`,
-      breakfast: { name: `Breakfast ${dayIndex + 1}` },
-      lunch: { name: `Lunch ${dayIndex + 1}` },
-      dinner: { name: `Dinner ${dayIndex + 1}` },
-      snack: null,
-      explanation: "Balanced meals",
-    })),
-  })),
+  generateStructuredMealPlan,
 }));
 
 describe("generateWeeklyMealPlan", () => {
@@ -73,6 +75,7 @@ describe("generateWeeklyMealPlan", () => {
     vi.resetModules();
     authGetUser.mockReset();
     from.mockClear();
+    generateStructuredMealPlan.mockClear();
 
     profileChain.select.mockReturnValue(profileChain);
     profileChain.eq.mockReturnValue(profileChain);
@@ -123,6 +126,7 @@ describe("generateWeeklyMealPlan", () => {
     });
 
     mealPlanDaysInsert.mockReset();
+    mealPlanDaysInsert.mockResolvedValue({ error: null });
   });
 
   it("deletes the inserted parent meal plan when saving days fails", async () => {
@@ -150,5 +154,47 @@ describe("generateWeeklyMealPlan", () => {
 
     expect(mealPlansDelete).toHaveBeenCalledTimes(1);
     expect(mealPlansDeleteEq).toHaveBeenCalledWith("id", "meal-plan-123");
+  });
+
+  it("blocks meal-plan generation when the latest check-in requires professional care", async () => {
+    authGetUser.mockResolvedValue({
+      data: {
+        user: {
+          id: "user-123",
+        },
+      },
+      error: null,
+    });
+    checkinChain.limit.mockResolvedValue({
+      data: [
+        {
+          id: "checkin-123",
+          user_id: "user-123",
+          condition_score: 4,
+          sleep_quality: 4,
+          stress_level: 7,
+          exercised_today: false,
+          appetite: "low",
+          digestion: "normal",
+          symptoms: [],
+          symptom_severity: 9,
+          water_intake: null,
+          notes: null,
+          created_at: "2026-07-10T00:00:00.000Z",
+        },
+      ],
+      error: null,
+    });
+
+    const { generateWeeklyMealPlan } = await import(
+      "@/app/actions/recommendations"
+    );
+
+    await expect(generateWeeklyMealPlan("user-123")).rejects.toThrow(
+      "Your latest check-in needs professional follow-up before generating a new meal plan.",
+    );
+    expect(generateStructuredMealPlan).not.toHaveBeenCalled();
+    expect(mealPlansInsert).not.toHaveBeenCalled();
+    expect(mealPlanDaysInsert).not.toHaveBeenCalled();
   });
 });

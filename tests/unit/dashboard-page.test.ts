@@ -4,12 +4,14 @@ import {
   buildAdjustmentNotice,
   getTodayCheckin,
 } from "@/app/dashboard/checkin-state";
+import { getSeoulWeekStartDate } from "@/lib/date/seoul";
 import type { Database } from "@/lib/supabase/types";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 type DailyCheckinRow = Database["public"]["Tables"]["daily_checkins"]["Row"];
 
 const profile: ProfileRow = {
+  id: "profile-123",
   user_id: "user-123",
   nickname: "Mina",
   birth_date: "1994-02-15",
@@ -40,7 +42,6 @@ function buildCheckin(createdAt: string): DailyCheckinRow {
     water_intake: null,
     notes: null,
     created_at: createdAt,
-    updated_at: createdAt,
   };
 }
 
@@ -61,5 +62,11 @@ describe("dashboard today check-in helpers", () => {
     const todayCheckin = buildCheckin("2026-07-10T01:30:00.000Z");
 
     expect(getTodayCheckin(todayCheckin, "2026-07-10")).toEqual(todayCheckin);
+  });
+
+  it("computes week start from the Seoul-local date instead of UTC midnight", () => {
+    expect(getSeoulWeekStartDate(new Date("2026-07-05T15:30:00.000Z"))).toBe(
+      "2026-07-06",
+    );
   });
 });

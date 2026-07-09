@@ -4,10 +4,18 @@ import { revalidatePath } from "next/cache";
 
 import { profileSchema } from "@/lib/health/schema";
 import { createServerActionSupabaseClient } from "@/lib/supabase/server";
+import type { Database, Json } from "@/lib/supabase/types";
 
 export type SaveProfileResult =
   | { ok: true }
   | { ok: false; message: string };
+
+type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+
+const signInRequiredMessage = "濡쒓렇?몄씠 ?꾩슂?⑸땲??";
+const invalidProfileMessage = "?낅젰???뺣낫瑜??ㅼ떆 ?뺤씤??二쇱꽭??";
+const saveFailedMessage =
+  "?꾨줈?????以?臾몄젣媛 諛쒖깮?덉뒿?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??";
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -34,6 +42,40 @@ function getStringList(formData: FormData, key: string) {
     .filter(Boolean);
 }
 
+function asStringArray(value: Json) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function normalizeList(values: string[]) {
+  return [...new Set(values.map((value) => value.trim().toLowerCase()).filter(Boolean))]
+    .sort()
+    .join("|");
+}
+
+function shouldMarkMealPlansStale(
+  previousProfile: ProfileRow | null,
+  nextProfile: {
+    favorite_foods: string[];
+    avoided_foods: string[];
+    allergies: string[];
+  },
+) {
+  if (!previousProfile) {
+    return false;
+  }
+
+  return (
+    normalizeList(asStringArray(previousProfile.favorite_foods)) !==
+      normalizeList(nextProfile.favorite_foods) ||
+    normalizeList(asStringArray(previousProfile.avoided_foods)) !==
+      normalizeList(nextProfile.avoided_foods) ||
+    normalizeList(asStringArray(previousProfile.allergies)) !==
+      normalizeList(nextProfile.allergies)
+  );
+}
+
 export async function saveProfile(
   formData: FormData,
 ): Promise<SaveProfileResult> {
@@ -43,7 +85,7 @@ export async function saveProfile(
   if (userError || !data.user) {
     return {
       ok: false,
-      message: "로그인이 필요합니다.",
+      message: signInRequiredMessage,
     };
   }
 
@@ -63,34 +105,67 @@ export async function saveProfile(
   if (!parsed.success) {
     return {
       ok: false,
-      message: "입력한 정보를 다시 확인해 주세요.",
+      message: invalidProfileMessage,
     };
   }
 
-  const { error } = await supabase.from("profiles").upsert(
-    {
-      user_id: data.user.id,
-      nickname: parsed.data.nickname,
-      birth_date: parsed.data.birthDate ?? null,
-      height_cm: parsed.data.heightCm,
-      weight_kg: parsed.data.weightKg,
-      weight_goal: parsed.data.weightGoal,
-      health_concerns: parsed.data.healthConcerns,
-      current_condition: parsed.data.currentCondition ?? null,
-      favorite_foods: parsed.data.favoriteFoods,
-      avoided_foods: parsed.data.avoidedFoods,
-      allergies: parsed.data.allergies,
-    },
-    {
-      onConflict: "user_id",
-    },
-  );
+  const { data: existingProfile, error: existingProfileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("user_id", data.user.id)
+    .maybeSingle();
+
+  if (existingProfileError) {
+    return {
+      ok: false,
+      message: saveFailedMessage,
+    };
+  }
+
+  const profilePayload = {
+    user_id: data.user.id,
+    nickname: parsed.data.nickname,
+    birth_date: parsed.data.birthDate ?? null,
+    height_cm: parsed.data.heightCm,
+    weight_kg: parsed.data.weightKg,
+    weight_goal: parsed.data.weightGoal,
+    health_concerns: parsed.data.healthConcerns,
+    current_condition: parsed.data.currentCondition ?? null,
+    favorite_foods: parsed.data.favoriteFoods,
+    avoided_foods: parsed.data.avoidedFoods,
+    allergies: parsed.data.allergies,
+  };
+
+  const { error } = await supabase.from("profiles").upsert(profilePayload, {
+    onConflict: "user_id",
+  });
 
   if (error) {
     return {
       ok: false,
-      message: "프로필 저장 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+      message: saveFailedMessage,
     };
+  }
+
+  if (
+    shouldMarkMealPlansStale(existingProfile, {
+      favorite_foods: profilePayload.favorite_foods,
+      avoided_foods: profilePayload.avoided_foods,
+      allergies: profilePayload.allergies,
+    })
+  ) {
+    const { error: stalePlansError } = await supabase
+      .from("meal_plans")
+      .update({ status: "stale" })
+      .eq("user_id", data.user.id)
+      .eq("status", "active");
+
+    if (stalePlansError) {
+      return {
+        ok: false,
+        message: saveFailedMessage,
+      };
+    }
   }
 
   revalidatePath("/dashboard");

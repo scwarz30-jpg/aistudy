@@ -125,4 +125,3 @@ The Playwright config starts the app with `npm run dev` and runs specs from `tes
 
 - Do not commit secrets to the repo or `vercel.json`.
 - The checked-in `vercel.json` only declares the Next.js framework.
-- Some older screens still contain garbled legacy copy outside the signup/onboarding flow; treat that as follow-up polish, not deployment config.

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { RegenerateMealPlanButton } from "@/app/meal-plan/RegenerateMealPlanButton";
 import { Notice } from "@/components/ui/Notice";
+import { isCurrentMealPlan } from "@/lib/meal-plan/state";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Database, Json } from "@/lib/supabase/types";
 
@@ -48,11 +49,12 @@ async function loadLatestMealPlan(userId: string) {
     throw new Error("Unable to load meal plans.");
   }
 
-  const mealPlan = mealPlans?.[0] ?? null;
+  const latestMealPlan = mealPlans?.[0] ?? null;
 
-  if (!mealPlan) {
+  if (!latestMealPlan) {
     return {
-      mealPlan: null,
+      currentMealPlan: null,
+      staleMealPlan: null,
       mealPlanDays: [] as MealPlanDayRow[],
     };
   }
@@ -61,7 +63,7 @@ async function loadLatestMealPlan(userId: string) {
     .from("meal_plan_days")
     .select("*")
     .eq("user_id", userId)
-    .eq("meal_plan_id", mealPlan.id)
+    .eq("meal_plan_id", latestMealPlan.id)
     .order("day_index", { ascending: true });
 
   if (mealPlanDaysError) {
@@ -69,7 +71,8 @@ async function loadLatestMealPlan(userId: string) {
   }
 
   return {
-    mealPlan,
+    currentMealPlan: isCurrentMealPlan(latestMealPlan) ? latestMealPlan : null,
+    staleMealPlan: isCurrentMealPlan(latestMealPlan) ? null : latestMealPlan,
     mealPlanDays: mealPlanDays ?? [],
   };
 }
@@ -110,14 +113,23 @@ export default async function MealPlanPage() {
     redirect("/login");
   }
 
-  const { mealPlan, mealPlanDays } = await loadLatestMealPlan(data.user.id);
+  const { currentMealPlan, staleMealPlan, mealPlanDays } = await loadLatestMealPlan(
+    data.user.id,
+  );
 
   return (
     <main className="px-4 py-6 sm:px-6 sm:py-10">
       <section className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <MealPlanHeader mealPlan={mealPlan} />
+        <MealPlanHeader mealPlan={currentMealPlan} />
 
-        {!mealPlan ? (
+        {staleMealPlan ? (
+          <Notice title="Your previous meal plan is stale" tone="warning">
+            Your food preferences or exclusions changed. Regenerate a meal plan
+            before treating this week&apos;s meals as current.
+          </Notice>
+        ) : null}
+
+        {!currentMealPlan ? (
           <Notice title="No meal plan yet" tone="info">
             Generate your first weekly meal plan to see tailored breakfasts,
             lunches, dinners, snacks, and day-by-day notes.

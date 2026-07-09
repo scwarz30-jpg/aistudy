@@ -1,22 +1,9 @@
 import { requiresProfessionalCare } from "@/lib/health/rules";
+import { getSeoulDateString } from "@/lib/date/seoul";
 import type { Database, Json } from "@/lib/supabase/types";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 type DailyCheckinRow = Database["public"]["Tables"]["daily_checkins"]["Row"];
-
-function getDateStringInSeoul(date: Date) {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-  }).formatToParts(date);
-  const year = parts.find((part) => part.type === "year")?.value;
-  const month = parts.find((part) => part.type === "month")?.value;
-  const day = parts.find((part) => part.type === "day")?.value;
-
-  return `${year}-${month}-${day}`;
-}
 
 function asStringArray(value: Json) {
   return Array.isArray(value)
@@ -128,7 +115,7 @@ export function getTodayCheckin(
     return null;
   }
 
-  return getDateStringInSeoul(new Date(latestCheckin.created_at)) === todayDate
+  return getSeoulDateString(new Date(latestCheckin.created_at)) === todayDate
     ? latestCheckin
     : null;
 }

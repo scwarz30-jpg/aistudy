@@ -1,18 +1,18 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { buildAdjustmentNotice, getTodayCheckin } from "@/app/dashboard/checkin-state";
 import { RegenerateMealPlanButton } from "@/app/meal-plan/RegenerateMealPlanButton";
 import { Notice } from "@/components/ui/Notice";
-import { requiresProfessionalCare } from "@/lib/health/rules";
+import { getSeoulDateString, SEOUL_TIME_ZONE } from "@/lib/date/seoul";
+import { isCurrentMealPlan } from "@/lib/meal-plan/state";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Database, Json } from "@/lib/supabase/types";
 
-type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
-type DailyCheckinRow = Database["public"]["Tables"]["daily_checkins"]["Row"];
 type MealPlanDayRow = Database["public"]["Tables"]["meal_plan_days"]["Row"];
 
 function formatDateLabel(dateString: string) {
-  return new Intl.DateTimeFormat("ko-KR", {
+  return new Intl.DateTimeFormat("en-US", {
     month: "long",
     day: "numeric",
     timeZone: "UTC",
@@ -21,164 +21,37 @@ function formatDateLabel(dateString: string) {
 }
 
 function formatDateTimeLabel(dateString: string) {
-  return new Intl.DateTimeFormat("ko-KR", {
+  return new Intl.DateTimeFormat("en-US", {
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
     month: "long",
-    timeZone: "Asia/Seoul",
+    timeZone: SEOUL_TIME_ZONE,
   }).format(new Date(dateString));
-}
-
-function getDateStringInSeoul(date: Date) {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-  }).formatToParts(date);
-  const year = parts.find((part) => part.type === "year")?.value;
-  const month = parts.find((part) => part.type === "month")?.value;
-  const day = parts.find((part) => part.type === "day")?.value;
-
-  return `${year}-${month}-${day}`;
-}
-
-function asStringArray(value: Json) {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string")
-    : [];
 }
 
 function getWeightGoalLabel(value: string | null) {
   if (value === "lose") {
-    return "감량";
+    return "Lose weight";
   }
 
   if (value === "gain") {
-    return "증량";
+    return "Gain weight";
   }
 
   if (value === "maintain") {
-    return "유지";
+    return "Maintain";
   }
 
-  return "미설정";
+  return "Not set";
 }
 
 function getMealName(value: Json) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return "미정";
+    return "Unavailable";
   }
 
-  return typeof value.name === "string" ? value.name : "미정";
-}
-
-export function buildAdjustmentNotice(
-  profile: ProfileRow | null,
-  latestCheckin: DailyCheckinRow | null,
-) {
-  if (!profile) {
-    return {
-      tone: "warning" as const,
-      title: "프로필 설정이 먼저 필요해요",
-      message: "온보딩을 완료하면 체크인과 식단 요약을 더 정확하게 연결할 수 있어요.",
-    };
-  }
-
-  if (!latestCheckin) {
-    return {
-      tone: "info" as const,
-      title: "오늘의 조정 팁 준비 중",
-      message: "오늘 체크인을 남기면 컨디션에 맞는 식단 메모를 바로 보여드릴게요.",
-    };
-  }
-
-  const mappedCheckin = {
-    conditionScore: latestCheckin.condition_score,
-    sleepQuality: latestCheckin.sleep_quality,
-    stressLevel: latestCheckin.stress_level,
-    exercisedToday: latestCheckin.exercised_today,
-    appetite: latestCheckin.appetite,
-    digestion: latestCheckin.digestion,
-    symptoms: asStringArray(latestCheckin.symptoms),
-    symptomSeverity: latestCheckin.symptom_severity,
-    waterIntake: latestCheckin.water_intake,
-    notes: latestCheckin.notes,
-  };
-
-  if (requiresProfessionalCare(mappedCheckin)) {
-    return {
-      tone: "warning" as const,
-      title: "오늘은 전문 진료를 우선해 주세요",
-      message:
-        "체크인에 심한 증상이나 응급 신호가 보여요. 식단 조정보다 병원, 약사, 또는 의료진 상담을 먼저 권장합니다.",
-    };
-  }
-
-  if (
-    latestCheckin.condition_score <= 4 ||
-    latestCheckin.sleep_quality <= 4
-  ) {
-    return {
-      tone: "warning" as const,
-      title: "부담 적은 식사로 속도를 늦춰 보세요",
-      message:
-        "오늘은 자극적인 음식보다 수분과 부드러운 탄수화물, 단백질 위주로 가볍게 챙기는 편이 좋아 보여요.",
-    };
-  }
-
-  if (latestCheckin.stress_level >= 7) {
-    return {
-      tone: "info" as const,
-      title: "스트레스 완화용 식사 리듬을 추천해요",
-      message:
-        "카페인과 너무 짠 음식은 줄이고, 따뜻한 식사와 충분한 수분 섭취를 중심으로 하루 템포를 맞춰 보세요.",
-    };
-  }
-
-  if (
-    latestCheckin.appetite === "low" ||
-    latestCheckin.digestion === "bloated" ||
-    latestCheckin.digestion === "sensitive" ||
-    latestCheckin.digestion === "upset"
-  ) {
-    return {
-      tone: "info" as const,
-      title: "소화가 편한 구성이 잘 맞겠어요",
-      message:
-        "죽, 수프, 익힌 채소처럼 부담이 적은 메뉴를 우선하고, 한 번에 많이 먹기보다 나눠 먹는 편이 좋아 보여요.",
-    };
-  }
-
-  if (latestCheckin.exercised_today && latestCheckin.condition_score >= 7) {
-    return {
-      tone: "success" as const,
-      title: "운동 후 회복용 한 끼를 챙겨 보세요",
-      message:
-        "오늘은 단백질과 수분을 조금 더 챙기면 좋아요. 현재 식단에 간단한 단백질 간식이나 과일을 보완해 보세요.",
-    };
-  }
-
-  return {
-    tone: "success" as const,
-    title: "현재 리듬을 그대로 유지해도 좋아요",
-    message:
-      "큰 조정 신호는 없어요. 이번 주 식단을 유지하면서 수분과 식사 시간을 규칙적으로 챙겨 보세요.",
-  };
-}
-
-export function getTodayCheckin(
-  latestCheckin: DailyCheckinRow | null,
-  todayDate: string,
-) {
-  if (!latestCheckin) {
-    return null;
-  }
-
-  return getDateStringInSeoul(new Date(latestCheckin.created_at)) === todayDate
-    ? latestCheckin
-    : null;
+  return typeof value.name === "string" ? value.name : "Unavailable";
 }
 
 async function loadLatestMealPlanDays(
@@ -252,12 +125,13 @@ export default async function DashboardPage() {
 
   const latestCheckin = latestCheckins?.[0] ?? null;
   const latestMealPlan = latestMealPlans?.[0] ?? null;
+  const currentMealPlan = isCurrentMealPlan(latestMealPlan) ? latestMealPlan : null;
   const mealPlanDays = await loadLatestMealPlanDays(
     supabase,
     userId,
-    latestMealPlan?.id ?? null,
+    currentMealPlan?.id ?? null,
   );
-  const todayDate = getDateStringInSeoul(new Date());
+  const todayDate = getSeoulDateString(new Date());
   const todayCheckin = getTodayCheckin(latestCheckin, todayDate);
   const hasCheckedInToday = todayCheckin !== null;
   const todayPlanDay =
@@ -274,11 +148,12 @@ export default async function DashboardPage() {
             </p>
             <h1 className="text-3xl font-semibold text-[var(--foreground)]">
               {profile?.nickname
-                ? `${profile.nickname}님의 오늘 건강 흐름`
-                : "오늘 건강 흐름"}
+                ? `${profile.nickname}'s daily health summary`
+                : "Daily health summary"}
             </h1>
             <p className="max-w-2xl text-sm leading-6 text-[var(--muted)]">
-              체크인, 주간 식단, 오늘의 조정 포인트를 한 번에 확인할 수 있어요.
+              Review today&apos;s check-in, this week&apos;s meal plan, and the
+              latest adjustment guidance in one place.
             </p>
           </div>
 
@@ -287,23 +162,24 @@ export default async function DashboardPage() {
               href={profile ? "/check-in" : "/onboarding"}
               className="inline-flex min-h-12 items-center justify-center rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-500"
             >
-              {profile ? "오늘 체크인하기" : "온보딩 시작하기"}
+              {profile ? "Complete today&apos;s check-in" : "Start onboarding"}
             </Link>
             <Link
               href="/meal-plan"
               className="inline-flex min-h-12 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:bg-white"
             >
-              식단 보기
+              View meal plan
             </Link>
           </div>
         </div>
 
         {!profile ? (
-          <Notice title="프로필이 아직 없어요" tone="warning">
+          <Notice title="Profile setup needed" tone="warning">
             <Link href="/onboarding" className="font-semibold underline">
-              온보딩으로 이동
+              Go to onboarding
             </Link>
-            해서 키, 체중, 목표, 음식 제한을 먼저 입력해 주세요.
+            {" "}to add your body metrics, goals, and food preferences before
+            using the personalized features.
           </Notice>
         ) : null}
 
@@ -313,12 +189,12 @@ export default async function DashboardPage() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-sky-600">
-                    오늘 체크인 상태
+                    Today&apos;s check-in
                   </p>
                   <h2 className="text-2xl font-semibold text-[var(--foreground)]">
                     {hasCheckedInToday
-                      ? "오늘 기록이 있어요"
-                      : "아직 오늘 체크인이 없어요"}
+                      ? "Today&apos;s entry is recorded"
+                      : "No check-in recorded for today"}
                   </h2>
                 </div>
 
@@ -326,7 +202,7 @@ export default async function DashboardPage() {
                   href="/check-in"
                   className="text-sm font-semibold text-sky-600 hover:text-sky-500"
                 >
-                  체크인 열기
+                  Open check-in
                 </Link>
               </div>
 
@@ -334,7 +210,7 @@ export default async function DashboardPage() {
                 <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div className="rounded-lg bg-[var(--background)] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                      최근 기록 시각
+                      Latest entry
                     </p>
                     <p className="mt-2 text-sm font-medium text-[var(--foreground)]">
                       {formatDateTimeLabel(latestCheckin.created_at)}
@@ -342,7 +218,7 @@ export default async function DashboardPage() {
                   </div>
                   <div className="rounded-lg bg-[var(--background)] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                      컨디션
+                      Condition
                     </p>
                     <p className="mt-2 text-sm font-medium text-[var(--foreground)]">
                       {latestCheckin.condition_score}/10
@@ -350,7 +226,7 @@ export default async function DashboardPage() {
                   </div>
                   <div className="rounded-lg bg-[var(--background)] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                      수면
+                      Sleep
                     </p>
                     <p className="mt-2 text-sm font-medium text-[var(--foreground)]">
                       {latestCheckin.sleep_quality}/10
@@ -358,7 +234,7 @@ export default async function DashboardPage() {
                   </div>
                   <div className="rounded-lg bg-[var(--background)] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                      스트레스
+                      Stress
                     </p>
                     <p className="mt-2 text-sm font-medium text-[var(--foreground)]">
                       {latestCheckin.stress_level}/10
@@ -367,7 +243,7 @@ export default async function DashboardPage() {
                 </div>
               ) : (
                 <div className="mt-6 rounded-lg bg-[var(--background)] px-4 py-3 text-sm leading-6 text-[var(--muted)]">
-                  첫 체크인을 남기면 오늘 상태와 조정 메모가 여기에 표시돼요.
+                  Submit your first check-in to unlock today-specific guidance.
                 </div>
               )}
 
@@ -382,12 +258,12 @@ export default async function DashboardPage() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-sky-600">
-                    이번 주 식단 요약
+                    This week&apos;s meal plan
                   </p>
                   <h2 className="text-2xl font-semibold text-[var(--foreground)]">
-                    {latestMealPlan
-                      ? `${formatDateLabel(latestMealPlan.week_start_date)} 시작`
-                      : "아직 생성된 식단이 없어요"}
+                    {currentMealPlan
+                      ? `${formatDateLabel(currentMealPlan.week_start_date)} start`
+                      : "No current meal plan"}
                   </h2>
                 </div>
 
@@ -395,17 +271,17 @@ export default async function DashboardPage() {
                   href="/meal-plan"
                   className="text-sm font-semibold text-sky-600 hover:text-sky-500"
                 >
-                  전체 식단 보기
+                  Open meal plan
                 </Link>
               </div>
 
-              {latestMealPlan ? (
+              {currentMealPlan ? (
                 <div className="mt-6 grid gap-4 lg:grid-cols-[220px_1fr]">
                   <div className="rounded-lg bg-[var(--background)] p-4">
                     <dl className="space-y-3">
                       <div>
                         <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                          목표
+                          Goal
                         </dt>
                         <dd className="mt-1 text-sm font-medium text-[var(--foreground)]">
                           {getWeightGoalLabel(profile?.weight_goal ?? null)}
@@ -413,18 +289,20 @@ export default async function DashboardPage() {
                       </div>
                       <div>
                         <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                          상태
+                          Status
                         </dt>
                         <dd className="mt-1 text-sm font-medium text-[var(--foreground)]">
-                          {latestMealPlan.status}
+                          {currentMealPlan.status}
                         </dd>
                       </div>
                       <div>
                         <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                          체크인 연동
+                          Check-in source
                         </dt>
                         <dd className="mt-1 text-sm font-medium text-[var(--foreground)]">
-                          {latestMealPlan.source_checkin_id ? "반영됨" : "기본 프로필 기준"}
+                          {currentMealPlan.source_checkin_id
+                            ? "Adjusted from latest check-in"
+                            : "Profile-based default"}
                         </dd>
                       </div>
                     </dl>
@@ -435,7 +313,9 @@ export default async function DashboardPage() {
                       <div className="space-y-3">
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                            {todayPlanDay.date === todayDate ? "오늘 식단" : "가장 가까운 식단"}
+                            {todayPlanDay.date === todayDate
+                              ? "Today&apos;s plan"
+                              : "Closest planned day"}
                           </p>
                           <h3 className="mt-1 text-lg font-semibold text-[var(--foreground)]">
                             {formatDateLabel(todayPlanDay.date)}
@@ -444,7 +324,7 @@ export default async function DashboardPage() {
                         <dl className="grid gap-3 sm:grid-cols-3">
                           <div>
                             <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                              아침
+                              Breakfast
                             </dt>
                             <dd className="mt-1 text-sm text-[var(--foreground)]">
                               {getMealName(todayPlanDay.breakfast)}
@@ -452,7 +332,7 @@ export default async function DashboardPage() {
                           </div>
                           <div>
                             <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                              점심
+                              Lunch
                             </dt>
                             <dd className="mt-1 text-sm text-[var(--foreground)]">
                               {getMealName(todayPlanDay.lunch)}
@@ -460,7 +340,7 @@ export default async function DashboardPage() {
                           </div>
                           <div>
                             <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                              저녁
+                              Dinner
                             </dt>
                             <dd className="mt-1 text-sm text-[var(--foreground)]">
                               {getMealName(todayPlanDay.dinner)}
@@ -470,16 +350,23 @@ export default async function DashboardPage() {
                       </div>
                     ) : (
                       <p className="text-sm leading-6 text-[var(--muted)]">
-                        식단 요약을 준비하는 중이에요.
+                        Meal-plan details are being prepared.
                       </p>
                     )}
                   </div>
                 </div>
               ) : (
                 <div className="mt-6 space-y-4">
-                  <Notice title="식단 생성이 아직 없어요" tone="info">
-                    현재 프로필을 바탕으로 주간 식단을 만들어 보세요.
+                  <Notice title="No current meal plan" tone="info">
+                    Generate a weekly plan based on your profile and recent
+                    check-ins.
                   </Notice>
+                  {latestMealPlan && !currentMealPlan ? (
+                    <Notice title="Refresh your previous meal plan" tone="warning">
+                      Your saved plan is stale after a profile change. Generate
+                      a new one before following this week&apos;s meals.
+                    </Notice>
+                  ) : null}
                   {profile ? (
                     <div className="max-w-xs">
                       <RegenerateMealPlanButton />
@@ -494,7 +381,7 @@ export default async function DashboardPage() {
             <div className="space-y-4">
               <div className="space-y-1">
                 <p className="text-sm font-semibold text-sky-600">
-                  오늘의 조정 메모
+                  Today&apos;s guidance
                 </p>
                 <h2 className="text-2xl font-semibold text-[var(--foreground)]">
                   {adjustmentNotice.title}
@@ -507,17 +394,22 @@ export default async function DashboardPage() {
 
               <div className="rounded-lg bg-[var(--background)] p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                  요약 상태
+                  Summary
                 </p>
                 <ul className="mt-3 space-y-3 text-sm leading-6 text-[var(--foreground)]">
                   <li>
-                    오늘 체크인: {hasCheckedInToday ? "완료" : "미완료"}
+                    Today&apos;s check-in: {hasCheckedInToday ? "done" : "missing"}
                   </li>
                   <li>
-                    최근 식단: {latestMealPlan ? "생성됨" : "미생성"}
+                    Latest meal plan:{" "}
+                    {currentMealPlan
+                      ? "current"
+                      : latestMealPlan
+                        ? "stale"
+                        : "none"}
                   </li>
                   <li>
-                    프로필: {profile ? "완료" : "미완료"}
+                    Profile: {profile ? "complete" : "missing"}
                   </li>
                 </ul>
               </div>
