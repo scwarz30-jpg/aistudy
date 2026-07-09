@@ -91,6 +91,23 @@ describe("requiresProfessionalCare", () => {
     ).toBe(true);
   });
 
+  it("returns true for symptom severity above the urgent threshold", () => {
+    expect(
+      requiresProfessionalCare({
+        conditionScore: 3,
+        sleepQuality: 4,
+        stressLevel: 8,
+        exercisedToday: false,
+        appetite: "low",
+        digestion: "upset",
+        symptoms: ["nausea"],
+        symptomSeverity: 10,
+        waterIntake: 2,
+        notes: null,
+      }),
+    ).toBe(true);
+  });
+
   it("returns true for urgent English and Korean symptom terms", () => {
     expect(
       requiresProfessionalCare({
@@ -119,6 +136,23 @@ describe("requiresProfessionalCare", () => {
         symptomSeverity: 2,
         waterIntake: 6,
         notes: null,
+      }),
+    ).toBe(true);
+  });
+
+  it("returns true when urgent terms appear in notes", () => {
+    expect(
+      requiresProfessionalCare({
+        conditionScore: 5,
+        sleepQuality: 4,
+        stressLevel: 6,
+        exercisedToday: false,
+        appetite: "reduced",
+        digestion: "normal",
+        symptoms: ["fatigue"],
+        symptomSeverity: 4,
+        waterIntake: 5,
+        notes: "오늘은 호흡곤란이 잠깐 있었어요.",
       }),
     ).toBe(true);
   });
