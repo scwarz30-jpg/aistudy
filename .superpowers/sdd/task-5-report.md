@@ -185,3 +185,49 @@ next build: exit 0
 
 - There are no dedicated automated tests yet for the server action, persistence flow, or UI rendering; current automated coverage for Task 5 is concentrated in schema validation plus lint/build verification.
 - The AI provider integration uses an OpenAI-compatible chat-completions request shape; if deployment uses a different provider contract behind `AI_PROVIDER_API_KEY`, that environment may need matching base URL/model settings.
+
+## Task 5 Review Fixes
+
+### Findings addressed
+
+- P1: `src/lib/ai/generate.ts` now uses the deterministic mock only when `AI_PROVIDER_API_KEY` is not configured. When an API-backed generation attempt fails, it throws a clear server-side error instead of returning canned output.
+- P2: `src/app/actions/recommendations.ts` now deletes the just-inserted `meal_plans` parent row when `meal_plan_days` insertion fails, preventing an empty current plan from being left behind.
+
+### Focused regression tests
+
+Commands:
+
+```bash
+npm run test -- tests/unit/generate-meal-plan.test.ts
+npm run test -- tests/unit/recommendations-action.test.ts
+```
+
+Observed output:
+
+```text
+generate-meal-plan.test.ts: 3 passed
+recommendations-action.test.ts: 1 passed
+```
+
+Notes:
+
+- Added coverage for the no-silent-fallback path when an API key is configured.
+- Added coverage for explicit parent-plan cleanup when day insertion fails.
+
+### Required verification
+
+Commands:
+
+```bash
+npm run test -- tests/unit/schemas.test.ts
+npm run lint
+npm run build
+```
+
+Observed output:
+
+```text
+schemas.test.ts: 8 passed
+eslint: exit 0
+next build: exit 0
+```

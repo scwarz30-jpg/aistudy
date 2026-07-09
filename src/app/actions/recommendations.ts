@@ -168,6 +168,17 @@ export async function generateWeeklyMealPlan(
   );
 
   if (insertDaysError) {
+    const { error: cleanupError } = await supabase
+      .from("meal_plans")
+      .delete()
+      .eq("id", insertedPlan.id);
+
+    if (cleanupError) {
+      throw new Error(
+        "Unable to save meal plan days, and failed to roll back the incomplete meal plan.",
+      );
+    }
+
     throw new Error("Unable to save meal plan days.");
   }
 

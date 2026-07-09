@@ -232,7 +232,11 @@ function parseMealPlanJson(content: unknown) {
   const fencedMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/u);
   const jsonText = fencedMatch?.[1]?.trim() ?? rawText;
 
-  return JSON.parse(jsonText);
+  try {
+    return JSON.parse(jsonText);
+  } catch {
+    throw new Error("AI provider returned invalid JSON.");
+  }
 }
 
 async function requestAiMealPlan(input: GenerateStructuredMealPlanInput) {
@@ -293,17 +297,17 @@ async function requestAiMealPlan(input: GenerateStructuredMealPlanInput) {
 export async function generateStructuredMealPlan(
   input: GenerateStructuredMealPlanInput,
 ): Promise<MealPlanInput> {
-  const fallbackMealPlan = buildMockMealPlan(input);
-  const fallbackResult = safeParseMealPlan(
-    fallbackMealPlan,
-    input.excludedFoods,
-  );
-
-  if (!fallbackResult.success) {
-    throw new Error("Deterministic meal plan failed validation.");
-  }
-
   if (!process.env.AI_PROVIDER_API_KEY) {
+    const fallbackMealPlan = buildMockMealPlan(input);
+    const fallbackResult = safeParseMealPlan(
+      fallbackMealPlan,
+      input.excludedFoods,
+    );
+
+    if (!fallbackResult.success) {
+      throw new Error("Deterministic meal plan failed validation.");
+    }
+
     return fallbackResult.data;
   }
 
@@ -319,7 +323,9 @@ export async function generateStructuredMealPlan(
     }
 
     return validatedMealPlan.data;
-  } catch {
-    return fallbackResult.data;
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown AI generation error.";
+    throw new Error(`AI meal plan generation failed: ${message}`);
   }
 }
