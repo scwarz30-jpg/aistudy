@@ -46,16 +46,16 @@ vi.mock("@/lib/supabase/server", () => ({
 
 function buildValidFormData() {
   const formData = new FormData();
-  formData.set("nickname", "誘쇱븘");
+  formData.set("nickname", "민지");
   formData.set("birthDate", "1994-02-15");
   formData.set("heightCm", "165");
   formData.set("weightKg", "58");
   formData.set("weightGoal", "maintain");
-  formData.set("healthConcerns", "?쇰줈, ?뚰솕");
-  formData.set("currentCondition", "?섎㈃??議곌툑 遺議깊빐??");
-  formData.set("favoriteFoods", "?곗뼱\n?꾨?諛?");
-  formData.set("avoidedFoods", "?낆쉘");
-  formData.set("allergies", "?덉슦, 蹂듭댂??");
+  formData.set("healthConcerns", "피로, 소화");
+  formData.set("currentCondition", "수면이 부족하지만 안정적");
+  formData.set("favoriteFoods", "닭가슴살\n현미밥");
+  formData.set("avoidedFoods", "튀김");
+  formData.set("allergies", "우유, 땅콩");
 
   return formData;
 }
@@ -103,7 +103,7 @@ describe("saveProfile", () => {
 
     expect(result).toEqual({
       ok: false,
-      message: "濡쒓렇?몄씠 ?꾩슂?⑸땲??",
+      message: "로그인이 필요합니다.",
     });
   });
 
@@ -128,7 +128,7 @@ describe("saveProfile", () => {
 
     expect(result).toEqual({
       ok: false,
-      message: "?낅젰???뺣낫瑜??ㅼ떆 ?뺤씤??二쇱꽭??",
+      message: "입력값을 확인해 주세요.",
     });
   });
 
@@ -149,16 +149,16 @@ describe("saveProfile", () => {
     expect(profileUpsert).toHaveBeenCalledWith(
       {
         user_id: "user-123",
-        nickname: "誘쇱븘",
+        nickname: "민지",
         birth_date: "1994-02-15",
         height_cm: 165,
         weight_kg: 58,
         weight_goal: "maintain",
-        health_concerns: ["?쇰줈", "?뚰솕"],
-        current_condition: "?섎㈃??議곌툑 遺議깊빐??",
-        favorite_foods: ["?곗뼱", "?꾨?諛?"],
-        avoided_foods: ["?낆쉘"],
-        allergies: ["?덉슦", "蹂듭댂??"],
+        health_concerns: ["피로", "소화"],
+        current_condition: "수면이 부족하지만 안정적",
+        favorite_foods: ["닭가슴살", "현미밥"],
+        avoided_foods: ["튀김"],
+        allergies: ["우유", "땅콩"],
       },
       {
         onConflict: "user_id",
@@ -184,16 +184,16 @@ describe("saveProfile", () => {
       data: {
         id: "profile-123",
         user_id: "user-123",
-        nickname: "誘쇱븘",
+        nickname: "민지",
         birth_date: "1994-02-15",
         height_cm: 165,
         weight_kg: 58,
         weight_goal: "maintain",
         health_concerns: [],
         current_condition: null,
-        favorite_foods: ["?곗뼱"],
-        avoided_foods: ["?묎낵"],
-        allergies: ["?덉슦"],
+        favorite_foods: ["닭가슴살"],
+        avoided_foods: ["라면"],
+        allergies: ["우유"],
         created_at: "2026-07-10T00:00:00.000Z",
         updated_at: "2026-07-10T00:00:00.000Z",
       },

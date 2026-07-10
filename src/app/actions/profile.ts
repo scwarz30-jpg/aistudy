@@ -12,10 +12,10 @@ export type SaveProfileResult =
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
-const signInRequiredMessage = "濡쒓렇?몄씠 ?꾩슂?⑸땲??";
-const invalidProfileMessage = "?낅젰???뺣낫瑜??ㅼ떆 ?뺤씤??二쇱꽭??";
+const signInRequiredMessage = "로그인이 필요합니다.";
+const invalidProfileMessage = "입력값을 확인해 주세요.";
 const saveFailedMessage =
-  "?꾨줈?????以?臾몄젣媛 諛쒖깮?덉뒿?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??";
+  "프로필을 저장하는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -49,7 +49,9 @@ function asStringArray(value: Json) {
 }
 
 function normalizeList(values: string[]) {
-  return [...new Set(values.map((value) => value.trim().toLowerCase()).filter(Boolean))]
+  return [
+    ...new Set(values.map((value) => value.trim().toLowerCase()).filter(Boolean)),
+  ]
     .sort()
     .join("|");
 }
