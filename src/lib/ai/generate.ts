@@ -263,6 +263,20 @@ function buildMockMealPlan(
   };
 }
 
+function buildValidatedFallbackMealPlan(input: GenerateStructuredMealPlanInput) {
+  const fallbackMealPlan = buildMockMealPlan(input);
+  const fallbackResult = safeParseMealPlan(
+    fallbackMealPlan,
+    input.excludedFoods,
+  );
+
+  if (!fallbackResult.success) {
+    throw new Error("기본 식단표 검증에 실패했습니다.");
+  }
+
+  return fallbackResult.data;
+}
+
 function extractJsonText(content: unknown) {
   if (typeof content === "string") {
     return content;
@@ -366,17 +380,7 @@ export async function generateStructuredMealPlan(
   input: GenerateStructuredMealPlanInput,
 ): Promise<MealPlanInput> {
   if (!process.env.AI_PROVIDER_API_KEY) {
-    const fallbackMealPlan = buildMockMealPlan(input);
-    const fallbackResult = safeParseMealPlan(
-      fallbackMealPlan,
-      input.excludedFoods,
-    );
-
-    if (!fallbackResult.success) {
-      throw new Error("기본 식단표 검증에 실패했습니다.");
-    }
-
-    return fallbackResult.data;
+    return buildValidatedFallbackMealPlan(input);
   }
 
   try {
@@ -392,8 +396,10 @@ export async function generateStructuredMealPlan(
 
     return validatedMealPlan.data;
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "알 수 없는 AI 생성 오류입니다.";
-    throw new Error(`AI 식단표 생성에 실패했습니다: ${message}`);
+    console.warn(
+      "AI 식단표 생성에 실패하여 기본 식단표로 대체합니다.",
+      error,
+    );
+    return buildValidatedFallbackMealPlan(input);
   }
 }

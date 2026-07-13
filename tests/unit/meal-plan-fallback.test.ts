@@ -70,7 +70,44 @@ describe("fallback meal-plan generation", () => {
       );
       expect(tiredPlan.days[0].explanation).toContain("최근 체크인");
     } finally {
-      process.env.AI_PROVIDER_API_KEY = originalApiKey;
+      if (originalApiKey === undefined) {
+        delete process.env.AI_PROVIDER_API_KEY;
+      } else {
+        process.env.AI_PROVIDER_API_KEY = originalApiKey;
+      }
+    }
+  });
+
+  it("falls back to local generation when the AI provider is rate limited", async () => {
+    const originalApiKey = process.env.AI_PROVIDER_API_KEY;
+    const originalFetch = globalThis.fetch;
+    process.env.AI_PROVIDER_API_KEY = "test-api-key";
+    globalThis.fetch = vi.fn(async () => new Response(null, { status: 429 }));
+
+    try {
+      const mealPlan = await generateStructuredMealPlan({
+        weekStartDate: "2026-07-13",
+        profile,
+        latestCheckin: baseCheckin,
+        excludedFoods: [],
+        preferredFoods: profile.favoriteFoods,
+        bmi: calculateBmi(profile.heightCm, profile.weightKg),
+        sourceProfileSnapshot: profile,
+        sourceCheckinId: "11111111-1111-4111-8111-111111111111",
+      });
+
+      expect(mealPlan.days).toHaveLength(7);
+      expect(mealPlan.sourceCheckinId).toBe(
+        "11111111-1111-4111-8111-111111111111",
+      );
+      expect(mealPlan.days[0].explanation).toContain("최근 체크인");
+    } finally {
+      globalThis.fetch = originalFetch;
+      if (originalApiKey === undefined) {
+        delete process.env.AI_PROVIDER_API_KEY;
+      } else {
+        process.env.AI_PROVIDER_API_KEY = originalApiKey;
+      }
     }
   });
 });

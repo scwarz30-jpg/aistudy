@@ -75,9 +75,9 @@ describe("generateStructuredMealPlan", () => {
     expect(result.days[0].breakfast.name).toBe("그릭요거트 베리 볼");
   });
 
-  it("throws a provider error instead of silently returning the mock when an API key is configured", async () => {
+  it("returns a fallback meal plan when the provider request fails", async () => {
     process.env.AI_PROVIDER_API_KEY = "test-key";
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(null, {
         status: 502,
       }),
@@ -85,14 +85,16 @@ describe("generateStructuredMealPlan", () => {
 
     const { generateStructuredMealPlan } = await import("@/lib/ai/generate");
 
-    await expect(generateStructuredMealPlan(buildInput())).rejects.toThrow(
-      "AI 식단표 생성에 실패했습니다: AI 제공자 요청이 실패했습니다. 상태 코드: 502",
-    );
+    const result = await generateStructuredMealPlan(buildInput());
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(result.days).toHaveLength(7);
+    expect(result.days[0].explanation).toContain("프로필을 기준");
   });
 
-  it("throws a validation error instead of silently returning the mock when AI output is invalid", async () => {
+  it("returns a fallback meal plan when AI output is invalid", async () => {
     process.env.AI_PROVIDER_API_KEY = "test-key";
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
           choices: [
@@ -122,8 +124,10 @@ describe("generateStructuredMealPlan", () => {
 
     const { generateStructuredMealPlan } = await import("@/lib/ai/generate");
 
-    await expect(generateStructuredMealPlan(buildInput())).rejects.toThrow(
-      "AI 식단표 생성에 실패했습니다: AI 식단표 검증에 실패했습니다.",
-    );
+    const result = await generateStructuredMealPlan(buildInput());
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(result.days).toHaveLength(7);
+    expect(result.days[0].breakfast.name).toBe("그릭요거트 베리 볼");
   });
 });
