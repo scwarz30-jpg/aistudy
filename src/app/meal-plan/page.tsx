@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { RegenerateMealPlanButton } from "@/app/meal-plan/RegenerateMealPlanButton";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 import { Notice } from "@/components/ui/Notice";
 import { isCurrentMealPlan } from "@/lib/meal-plan/state";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -99,7 +100,10 @@ function MealPlanHeader({ mealPlan }: { mealPlan: MealPlanRow | null }) {
       </div>
 
       <div className="w-full max-w-xs">
-        <RegenerateMealPlanButton />
+        <div className="flex flex-col gap-3">
+          <RegenerateMealPlanButton />
+          <LogoutButton />
+        </div>
       </div>
     </div>
   );

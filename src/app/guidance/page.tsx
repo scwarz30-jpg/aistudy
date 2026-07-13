@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { LogoutButton } from "@/components/auth/LogoutButton";
 import { Notice } from "@/components/ui/Notice";
 import { buildGuidance } from "@/lib/health/guidance";
 import { dailyCheckinSchema, profileSchema } from "@/lib/health/schema";
@@ -184,6 +185,7 @@ export default async function GuidancePage() {
             >
               프로필 수정
             </Link>
+            <LogoutButton />
           </div>
         </div>
 

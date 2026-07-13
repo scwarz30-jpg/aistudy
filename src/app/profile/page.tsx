@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { ProfileEditor } from "@/app/profile/ProfileEditor";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 import { Notice } from "@/components/ui/Notice";
 import { profileSchema } from "@/lib/health/schema";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -73,14 +74,17 @@ export default async function ProfilePage() {
   return (
     <main className="px-4 py-6 sm:px-6 sm:py-10">
       <section className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        <div className="space-y-2">
-          <p className="text-sm font-semibold text-sky-600">프로필</p>
-          <h1 className="text-3xl font-semibold text-[var(--foreground)]">
-            건강 프로필 수정
-          </h1>
-          <p className="text-sm leading-6 text-[var(--muted)]">
-            현재 상태와 식사 선호를 업데이트하면 식단과 가이드가 더 잘 맞게 조정돼요.
-          </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-sky-600">프로필</p>
+            <h1 className="text-3xl font-semibold text-[var(--foreground)]">
+              건강 프로필 수정
+            </h1>
+            <p className="text-sm leading-6 text-[var(--muted)]">
+              현재 상태와 식사 선호를 업데이트하면 식단과 가이드가 더 잘 맞게 조정돼요.
+            </p>
+          </div>
+          <LogoutButton />
         </div>
 
         <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm sm:p-8">

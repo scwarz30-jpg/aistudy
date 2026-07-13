@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { buildAdjustmentNotice, getTodayCheckin } from "@/app/dashboard/checkin-state";
 import { RegenerateMealPlanButton } from "@/app/meal-plan/RegenerateMealPlanButton";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 import { Notice } from "@/components/ui/Notice";
 import { getSeoulDateString, SEOUL_TIME_ZONE } from "@/lib/date/seoul";
 import { isCurrentMealPlan } from "@/lib/meal-plan/state";
@@ -182,6 +183,7 @@ export default async function DashboardPage() {
             >
               식단표 보기
             </Link>
+            <LogoutButton />
           </div>
         </div>
 

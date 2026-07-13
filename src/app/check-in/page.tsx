@@ -8,6 +8,7 @@ import {
   saveDailyCheckin,
   type SaveDailyCheckinResult,
 } from "@/app/actions/checkins";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 import { Button } from "@/components/ui/Button";
 import { Notice } from "@/components/ui/Notice";
 import { TextField } from "@/components/ui/TextField";
@@ -98,16 +99,19 @@ export default function CheckInPage() {
   return (
     <main className="px-4 py-6 sm:px-6 sm:py-10">
       <section className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        <div className="space-y-2">
-          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-sky-600">
-            매일 체크인
-          </p>
-          <h1 className="text-3xl font-semibold text-[var(--foreground)]">
-            오늘 몸상태를 기록하세요
-          </h1>
-          <p className="max-w-2xl text-sm leading-6 text-[var(--muted)]">
-            기본 상태를 먼저 입력하고, 필요하면 증상이나 메모를 추가하세요.
-          </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-2">
+            <p className="text-sm font-semibold uppercase tracking-[0.08em] text-sky-600">
+              매일 체크인
+            </p>
+            <h1 className="text-3xl font-semibold text-[var(--foreground)]">
+              오늘 몸상태를 기록하세요
+            </h1>
+            <p className="max-w-2xl text-sm leading-6 text-[var(--muted)]">
+              기본 상태를 먼저 입력하고, 필요하면 증상이나 메모를 추가하세요.
+            </p>
+          </div>
+          <LogoutButton />
         </div>
 
         <Notice tone="warning" title="안전 안내">
