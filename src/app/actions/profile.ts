@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { z } from "zod";
 
 import { profileSchema } from "@/lib/health/schema";
 import { createServerActionSupabaseClient } from "@/lib/supabase/server";
@@ -17,6 +18,19 @@ const invalidProfileMessage = "입력값을 확인해 주세요.";
 const saveFailedMessage =
   "프로필을 저장하는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
 
+const profileFieldLabels: Record<string, string> = {
+  nickname: "닉네임",
+  birthDate: "생년월일",
+  heightCm: "키",
+  weightKg: "몸무게",
+  weightGoal: "목표",
+  healthConcerns: "건강 고민",
+  currentCondition: "현재 컨디션",
+  favoriteFoods: "좋아하는 음식",
+  avoidedFoods: "피하고 싶은 음식",
+  allergies: "알레르기",
+};
+
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
 
@@ -31,8 +45,9 @@ function getOptionalString(formData: FormData, key: string) {
 
 function getNumber(formData: FormData, key: string) {
   const value = getString(formData, key);
+  const normalizedValue = value.replace(",", ".");
 
-  return Number(value);
+  return normalizedValue.length > 0 ? Number(normalizedValue) : Number.NaN;
 }
 
 function getStringList(formData: FormData, key: string) {
@@ -54,6 +69,28 @@ function normalizeList(values: string[]) {
   ]
     .sort()
     .join("|");
+}
+
+function buildProfileValidationMessage(error: z.ZodError) {
+  const labels = [
+    ...new Set(
+      error.issues
+        .map((issue) => {
+          const fieldName = issue.path[0];
+
+          return typeof fieldName === "string"
+            ? profileFieldLabels[fieldName]
+            : null;
+        })
+        .filter((label): label is string => Boolean(label)),
+    ),
+  ];
+
+  if (labels.length === 0) {
+    return invalidProfileMessage;
+  }
+
+  return `${invalidProfileMessage} 문제가 있는 항목: ${labels.join(", ")}`;
 }
 
 function shouldMarkMealPlansStale(
@@ -107,7 +144,7 @@ export async function saveProfile(
   if (!parsed.success) {
     return {
       ok: false,
-      message: invalidProfileMessage,
+      message: buildProfileValidationMessage(parsed.error),
     };
   }
 

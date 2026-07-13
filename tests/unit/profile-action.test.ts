@@ -128,8 +128,37 @@ describe("saveProfile", () => {
 
     expect(result).toEqual({
       ok: false,
-      message: "입력값을 확인해 주세요.",
+      message: "입력값을 확인해 주세요. 문제가 있는 항목: 닉네임, 키, 몸무게",
     });
+  });
+
+  it("accepts comma decimal profile numbers", async () => {
+    authGetUser.mockResolvedValue({
+      data: {
+        user: {
+          id: "user-123",
+        },
+      },
+      error: null,
+    });
+
+    const { saveProfile } = await import("@/app/actions/profile");
+    const formData = buildValidFormData();
+    formData.set("heightCm", "165,5");
+    formData.set("weightKg", "58,4");
+
+    const result = await saveProfile(formData);
+
+    expect(profileUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        height_cm: 165.5,
+        weight_kg: 58.4,
+      }),
+      {
+        onConflict: "user_id",
+      },
+    );
+    expect(result).toEqual({ ok: true });
   });
 
   it("upserts a validated profile for the signed-in user", async () => {
