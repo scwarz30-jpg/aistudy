@@ -149,7 +149,7 @@ describe("generateWeeklyMealPlan", () => {
     );
 
     await expect(generateWeeklyMealPlan("user-123")).rejects.toThrow(
-      "Unable to save meal plan days.",
+      "식단 상세 정보를 저장하지 못했습니다.",
     );
 
     expect(mealPlansDelete).toHaveBeenCalledTimes(1);
@@ -191,7 +191,7 @@ describe("generateWeeklyMealPlan", () => {
     );
 
     await expect(generateWeeklyMealPlan("user-123")).rejects.toThrow(
-      "Your latest check-in needs professional follow-up before generating a new meal plan.",
+      "최근 체크인에 전문가 상담이 필요한 신호가 있어 새 식단표 생성보다 진료나 상담을 먼저 권장합니다.",
     );
     expect(generateStructuredMealPlan).not.toHaveBeenCalled();
     expect(mealPlansInsert).not.toHaveBeenCalled();

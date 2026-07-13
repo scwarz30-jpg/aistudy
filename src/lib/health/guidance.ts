@@ -5,7 +5,7 @@ import type {
 } from "@/lib/health/schema";
 
 export const MEDICINE_SAFETY_SENTENCE =
-  "This is general information, not diagnosis or prescription. Consult a doctor or pharmacist before using medicine.";
+  "이 내용은 일반 정보이며 진단이나 처방이 아닙니다. 약을 사용하기 전에는 의사나 약사와 상담해 주세요.";
 
 export type GuidanceItem = GuidanceItemInput;
 

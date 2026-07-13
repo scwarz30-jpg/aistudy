@@ -21,7 +21,7 @@ export function RegenerateMealPlanButton() {
 
       if (result.ok) {
         setTone("success");
-        setMessage("A fresh meal plan is ready.");
+        setMessage("새 식단표가 준비되었습니다.");
         router.refresh();
         return;
       }
@@ -34,7 +34,7 @@ export function RegenerateMealPlanButton() {
   return (
     <div className="space-y-3">
       <Button pending={isPending} onClick={handleClick}>
-        Regenerate meal plan
+        식단표 새로 만들기
       </Button>
       {message ? <Notice tone={tone}>{message}</Notice> : null}
     </div>

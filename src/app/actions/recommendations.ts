@@ -63,7 +63,7 @@ export async function generateWeeklyMealPlan(
   const { data: authData, error: authError } = await supabase.auth.getUser();
 
   if (authError || !authData.user || authData.user.id !== userId) {
-    throw new Error("Unauthorized meal plan request.");
+    throw new Error("식단표를 생성하려면 로그인이 필요합니다.");
   }
 
   const { data: profileRow, error: profileError } = await supabase
@@ -73,13 +73,13 @@ export async function generateWeeklyMealPlan(
     .single();
 
   if (profileError || !profileRow) {
-    throw new Error("Profile not found.");
+    throw new Error("프로필을 먼저 입력해 주세요.");
   }
 
   const parsedProfile = mapProfileRowToInput(profileRow);
 
   if (!parsedProfile.success) {
-    throw new Error("Profile data is incomplete.");
+    throw new Error("프로필 정보가 완전하지 않습니다.");
   }
 
   const { data: latestCheckins, error: checkinError } = await supabase
@@ -90,14 +90,14 @@ export async function generateWeeklyMealPlan(
     .limit(1);
 
   if (checkinError) {
-    throw new Error("Unable to load the latest check-in.");
+    throw new Error("최근 체크인을 불러오지 못했습니다.");
   }
 
   const latestCheckinRow = latestCheckins?.[0] ?? null;
   const latestCheckin = mapCheckinRowToInput(latestCheckinRow);
   if (latestCheckin && requiresProfessionalCare(latestCheckin)) {
     throw new Error(
-      "Your latest check-in needs professional follow-up before generating a new meal plan.",
+      "최근 체크인에 전문가 상담이 필요한 신호가 있어 새 식단표 생성보다 진료나 상담을 먼저 권장합니다.",
     );
   }
 
@@ -133,7 +133,7 @@ export async function generateWeeklyMealPlan(
   );
 
   if (!validatedMealPlan.success) {
-    throw new Error("Generated meal plan failed validation.");
+    throw new Error("생성된 식단표 검증에 실패했습니다.");
   }
 
   const { data: insertedPlan, error: insertPlanError } = await supabase
@@ -150,7 +150,7 @@ export async function generateWeeklyMealPlan(
     .single();
 
   if (insertPlanError || !insertedPlan) {
-    throw new Error("Unable to save meal plan.");
+    throw new Error("식단표를 저장하지 못했습니다.");
   }
 
   const { error: insertDaysError } = await supabase.from("meal_plan_days").insert(
@@ -175,11 +175,11 @@ export async function generateWeeklyMealPlan(
 
     if (cleanupError) {
       throw new Error(
-        "Unable to save meal plan days, and failed to roll back the incomplete meal plan.",
+        "식단 상세 정보를 저장하지 못했고, 불완전한 식단표 정리에도 실패했습니다.",
       );
     }
 
-    throw new Error("Unable to save meal plan days.");
+    throw new Error("식단 상세 정보를 저장하지 못했습니다.");
   }
 
   return { mealPlanId: insertedPlan.id };
@@ -194,7 +194,7 @@ export async function regenerateMealPlan(): Promise<
   if (error || !data.user) {
     return {
       ok: false,
-      message: "You need to sign in before generating a meal plan.",
+      message: "식단표를 생성하려면 로그인이 필요합니다.",
     };
   }
 
@@ -216,7 +216,7 @@ export async function regenerateMealPlan(): Promise<
       message:
         error instanceof Error
           ? error.message
-          : "Unable to generate a meal plan right now.",
+          : "지금은 식단표를 생성하지 못했습니다.",
     };
   }
 }

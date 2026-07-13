@@ -8,7 +8,7 @@ type MealPlanRow = Database["public"]["Tables"]["meal_plans"]["Row"];
 type GuidanceItemRow = Database["public"]["Tables"]["guidance_items"]["Row"];
 
 const dateStringSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/u, {
-  message: "Expected a YYYY-MM-DD date string.",
+  message: "YYYY-MM-DD 형식의 날짜를 입력해 주세요.",
 });
 
 const optionalTextSchema = z.string().trim().min(1).nullable().optional();
@@ -130,7 +130,7 @@ export function safeParseMealPlan(
       )
       .map(([fieldName]) => ({
         code: "custom" as const,
-        message: "Meal plan contains an excluded food.",
+        message: "식단표에 제외 음식이 포함되어 있습니다.",
         path: ["days", dayPosition, fieldName],
       }));
   });
@@ -165,7 +165,7 @@ function buildMealPlanDayIndexIssues(
   return [
     {
       code: "custom" as const,
-      message: "Meal plan must contain exactly one entry for each day index from 0 to 6.",
+      message: "식단표에는 0일부터 6일까지 각 날짜가 정확히 한 번씩 포함되어야 합니다.",
       path: ["days"],
     },
   ];

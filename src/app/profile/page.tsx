@@ -28,7 +28,7 @@ export default async function ProfilePage() {
     .maybeSingle();
 
   if (profileError) {
-    throw new Error("Unable to load profile.");
+    throw new Error("프로필을 불러오지 못했습니다.");
   }
 
   if (!profileRow) {
@@ -67,7 +67,7 @@ export default async function ProfilePage() {
   });
 
   if (!parsedProfile.success) {
-    throw new Error("Profile data is incomplete.");
+    throw new Error("프로필 정보가 완전하지 않습니다.");
   }
 
   return (

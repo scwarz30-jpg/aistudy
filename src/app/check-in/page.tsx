@@ -85,7 +85,7 @@ export default function CheckInPage() {
       setResult({
         ok: false,
         status: "error",
-        message: "We could not save this check-in. Please try again.",
+        message: "체크인을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
       });
     } finally {
       setIsPending(false);
@@ -100,27 +100,24 @@ export default function CheckInPage() {
       <section className="mx-auto flex w-full max-w-3xl flex-col gap-6">
         <div className="space-y-2">
           <p className="text-sm font-semibold uppercase tracking-[0.08em] text-sky-600">
-            Daily Check-In
+            매일 체크인
           </p>
           <h1 className="text-3xl font-semibold text-[var(--foreground)]">
-            Log today&apos;s health status
+            오늘 몸상태를 기록하세요
           </h1>
           <p className="max-w-2xl text-sm leading-6 text-[var(--muted)]">
-            Capture the basics first, then add symptoms or notes if you need
-            more detail.
+            기본 상태를 먼저 입력하고, 필요하면 증상이나 메모를 추가하세요.
           </p>
         </div>
 
-        <Notice tone="warning" title="Safety notice">
-          This tool helps with daily tracking. Severe symptoms, breathing
-          problems, chest pain, or heavy bleeding should be handled with
-          professional care first.
+        <Notice tone="warning" title="안전 안내">
+          이 기능은 매일 상태를 기록하기 위한 도구입니다. 심한 증상, 호흡곤란, 흉통, 심한 출혈이 있으면 먼저 의료진의 도움을 받아 주세요.
         </Notice>
 
         {result && "message" in result ? (
           <Notice
             tone={result.ok ? "warning" : "error"}
-            title={result.ok ? "Professional care recommended" : "Save failed"}
+            title={result.ok ? "전문가 상담을 권장합니다" : "저장에 실패했습니다"}
           >
             {result.message}
           </Notice>
@@ -130,11 +127,10 @@ export default function CheckInPage() {
           <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm sm:p-8">
             <div className="space-y-3">
               <h2 className="text-xl font-semibold text-[var(--foreground)]">
-                Check-in saved
+                체크인이 저장되었습니다
               </h2>
               <p className="text-sm leading-6 text-[var(--muted)]">
-                Your urgent check-in was saved. Move to the dashboard or meal
-                plan instead of submitting this entry again.
+                긴급 신호가 포함된 체크인을 저장했습니다. 같은 내용을 다시 제출하지 말고 대시보드나 식단표로 이동해 주세요.
               </p>
             </div>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -142,13 +138,13 @@ export default function CheckInPage() {
                 href="/dashboard"
                 className="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-sky-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-500"
               >
-                Go to dashboard
+                대시보드로 이동
               </Link>
               <Link
                 href="/meal-plan"
                 className="inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:bg-white"
               >
-                View meal plan
+                식단표 보기
               </Link>
             </div>
           </section>
@@ -160,59 +156,59 @@ export default function CheckInPage() {
             <section className="space-y-4">
               <div className="space-y-1">
                 <h2 className="text-xl font-semibold text-[var(--foreground)]">
-                  Quick check
+                  빠른 체크
                 </h2>
                 <p className="text-sm leading-6 text-[var(--muted)]">
-                  Record the signals that best describe how you feel today.
+                  오늘 몸상태를 가장 잘 설명하는 항목을 기록해 주세요.
                 </p>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <SelectField
-                  label="Condition score"
+                  label="컨디션 점수"
                   name="conditionScore"
                   defaultValue="5"
                   options={scoreOptions}
                 />
                 <SelectField
-                  label="Sleep quality"
+                  label="수면의 질"
                   name="sleepQuality"
                   defaultValue="5"
                   options={scoreOptions}
                 />
                 <SelectField
-                  label="Stress level"
+                  label="스트레스"
                   name="stressLevel"
                   defaultValue="5"
                   options={scoreOptions}
                 />
                 <SelectField
-                  label="Symptom severity"
+                  label="증상 심각도"
                   name="symptomSeverity"
                   defaultValue="0"
                   options={symptomSeverityOptions}
                 />
                 <SelectField
-                  label="Appetite"
+                  label="식욕"
                   name="appetite"
                   defaultValue=""
                   options={[
-                    { value: "", label: "Select" },
-                    { value: "normal", label: "Normal" },
-                    { value: "low", label: "Low" },
-                    { value: "high", label: "High" },
+                    { value: "", label: "선택" },
+                    { value: "normal", label: "보통" },
+                    { value: "low", label: "낮음" },
+                    { value: "high", label: "높음" },
                   ]}
                 />
                 <SelectField
-                  label="Digestion"
+                  label="소화 상태"
                   name="digestion"
                   defaultValue=""
                   options={[
-                    { value: "", label: "Select" },
-                    { value: "normal", label: "Normal" },
-                    { value: "bloated", label: "Bloated" },
-                    { value: "sensitive", label: "Sensitive" },
-                    { value: "upset", label: "Upset" },
+                    { value: "", label: "선택" },
+                    { value: "normal", label: "보통" },
+                    { value: "bloated", label: "더부룩함" },
+                    { value: "sensitive", label: "예민함" },
+                    { value: "upset", label: "불편함" },
                   ]}
                 />
               </div>
@@ -224,27 +220,27 @@ export default function CheckInPage() {
                   className="mt-1 h-4 w-4 rounded border-[var(--border)] text-sky-600 focus:ring-sky-500"
                 />
                 <span className="leading-6">
-                  I exercised today, even if it was light movement.
+                  오늘 가벼운 움직임이라도 운동을 했어요.
                 </span>
               </label>
             </section>
 
             <details className="rounded-lg border border-[var(--border)] bg-[var(--background)]">
               <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-[var(--foreground)]">
-                Add more detail
+                자세히 입력하기
               </summary>
               <div className="grid gap-4 border-t border-[var(--border)] px-4 py-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <TextField
-                    label="Symptoms"
+                    label="증상"
                     name="symptoms"
                     textarea
-                    placeholder="Headache, dizziness, nausea"
-                    hint="Separate items with commas or new lines."
+                    placeholder="두통, 어지러움, 메스꺼움"
+                    hint="쉼표 또는 줄바꿈으로 여러 항목을 입력할 수 있어요."
                   />
                 </div>
                 <TextField
-                  label="Water intake (cups)"
+                  label="물 섭취량 (컵)"
                   name="waterIntake"
                   type="number"
                   inputMode="numeric"
@@ -254,10 +250,10 @@ export default function CheckInPage() {
                 />
                 <div className="sm:col-span-2">
                   <TextField
-                    label="Notes"
+                    label="메모"
                     name="notes"
                     textarea
-                    placeholder="Share timing, food reactions, or care plans."
+                    placeholder="증상이 나타난 시간, 음식 반응, 관리 계획 등을 적어 주세요."
                   />
                 </div>
               </div>
@@ -265,13 +261,13 @@ export default function CheckInPage() {
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button type="submit" pending={isPending}>
-                Save check-in
+                체크인 저장
               </Button>
               <Link
                 href="/dashboard"
                 className="inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:bg-white"
               >
-                Back to dashboard
+                대시보드로 돌아가기
               </Link>
             </div>
           </form>

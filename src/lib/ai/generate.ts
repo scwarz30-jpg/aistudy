@@ -20,85 +20,92 @@ type MealTemplate = {
 
 const breakfastOptions: MealTemplate[] = [
   {
-    name: "Greek yogurt berry bowl",
-    description: "Greek yogurt with berries, oats, and chia seeds.",
+    name: "그릭요거트 베리 볼",
+    description: "그릭요거트에 베리, 오트, 치아씨드를 곁들인 아침 식사입니다.",
   },
   {
-    name: "Spinach egg toast",
-    description: "Whole-grain toast with scrambled eggs and sauteed spinach.",
+    name: "시금치 달걀 토스트",
+    description: "통곡물 토스트에 스크램블드 에그와 볶은 시금치를 올린 식사입니다.",
   },
   {
-    name: "Tofu vegetable rice bowl",
-    description: "Warm brown rice with tofu, zucchini, and sesame oil.",
+    name: "두부 채소 현미덮밥",
+    description: "따뜻한 현미밥에 두부, 애호박, 참기름을 더한 든든한 한 그릇입니다.",
   },
   {
-    name: "Banana oatmeal",
-    description: "Rolled oats cooked with banana slices and cinnamon.",
+    name: "바나나 오트밀",
+    description: "오트에 바나나와 시나몬을 넣어 부드럽게 끓인 아침 식사입니다.",
   },
 ];
 
 const lunchOptions: MealTemplate[] = [
   {
-    name: "Chicken grain bowl",
-    description: "Grilled chicken, brown rice, cucumber, and mixed greens.",
+    name: "닭가슴살 곡물 볼",
+    description: "구운 닭가슴살, 현미밥, 오이, 잎채소를 담은 점심 식사입니다.",
   },
   {
-    name: "Salmon sweet potato plate",
-    description: "Baked salmon with roasted sweet potato and broccoli.",
+    name: "연어 고구마 플레이트",
+    description: "구운 연어에 고구마와 브로콜리를 곁들인 균형 잡힌 식사입니다.",
   },
   {
-    name: "Tofu soba salad",
-    description: "Chilled soba noodles with tofu, cabbage, and carrots.",
+    name: "두부 메밀면 샐러드",
+    description: "차가운 메밀면에 두부, 양배추, 당근을 더한 산뜻한 점심입니다.",
   },
   {
-    name: "Turkey avocado wrap",
-    description: "Whole-grain wrap with turkey, avocado, lettuce, and tomato.",
+    name: "칠면조 아보카도 랩",
+    description: "통곡물 또띠아에 칠면조, 아보카도, 양상추, 토마토를 넣은 랩입니다.",
   },
 ];
 
 const dinnerOptions: MealTemplate[] = [
   {
-    name: "Beef vegetable stir-fry",
-    description: "Lean beef with bell peppers, mushrooms, and rice.",
+    name: "소고기 채소 볶음",
+    description: "기름기 적은 소고기와 파프리카, 버섯을 밥과 함께 먹는 저녁입니다.",
   },
   {
-    name: "Herb chicken quinoa plate",
-    description: "Roasted chicken with quinoa and green beans.",
+    name: "허브 치킨 퀴노아 플레이트",
+    description: "허브로 구운 닭고기에 퀴노아와 그린빈을 곁들인 식사입니다.",
   },
   {
-    name: "Miso cod rice set",
-    description: "Cod with steamed rice, bok choy, and light miso broth.",
+    name: "대구 된장국 밥상",
+    description: "대구, 밥, 청경채, 맑은 된장국을 함께 구성한 저녁입니다.",
   },
   {
-    name: "Lentil tomato pasta",
-    description: "Lentil pasta with tomato sauce and roasted vegetables.",
+    name: "렌틸 토마토 파스타",
+    description: "렌틸 파스타에 토마토소스와 구운 채소를 더한 식사입니다.",
   },
 ];
 
 const snackOptions: MealTemplate[] = [
   {
-    name: "Apple with almond butter",
-    description: "Sliced apple with a small serving of almond butter.",
+    name: "사과와 아몬드버터",
+    description: "얇게 썬 사과에 소량의 아몬드버터를 곁들인 간식입니다.",
   },
   {
-    name: "Carrot hummus cup",
-    description: "Carrot sticks with hummus.",
+    name: "당근 후무스 컵",
+    description: "스틱 당근을 후무스에 찍어 먹는 간단한 간식입니다.",
   },
   {
-    name: "Cottage cheese fruit cup",
-    description: "Cottage cheese with pineapple or berries.",
+    name: "코티지치즈 과일 컵",
+    description: "코티지치즈에 파인애플이나 베리를 곁들인 간식입니다.",
   },
   {
-    name: "Edamame pack",
-    description: "Steamed edamame with a pinch of sea salt.",
+    name: "에다마메 한 팩",
+    description: "찐 에다마메에 소금을 아주 조금 더한 간식입니다.",
   },
 ];
 
 const weightGoalExplanations = {
-  lose: "Meals emphasize steady energy, fiber, and portion-friendly balance for a weight-loss goal.",
+  lose: "감량 목표에 맞춰 포만감, 식이섬유, 적절한 양 조절을 우선했습니다.",
   maintain:
-    "Meals emphasize balanced energy, steady protein, and variety for weight maintenance.",
-  gain: "Meals emphasize calorie-dense staples, protein, and consistent fueling for a weight-gain goal.",
+    "유지 목표에 맞춰 균형 잡힌 에너지, 단백질, 식단 다양성을 우선했습니다.",
+  gain: "증량 목표에 맞춰 에너지 밀도, 단백질, 꾸준한 영양 보충을 우선했습니다.",
+} as const;
+
+const bmiCategoryLabels = {
+  underweight: "저체중",
+  normal: "정상",
+  overweight: "과체중",
+  obese: "비만",
 } as const;
 
 function normalizeFoodName(value: string) {
@@ -130,7 +137,7 @@ function pickAllowedMeal(
   if (allowedOptions.length === 0) {
     return {
       name: fallbackName,
-      description: "Prepared to fit the listed exclusions.",
+      description: "입력한 제외 음식을 피하도록 구성한 대체 식사입니다.",
     };
   }
 
@@ -156,25 +163,25 @@ function buildMockMealPlan(
         breakfastOptions,
         input.excludedFoods,
         dayIndex,
-        "Breakfast plate",
+        "아침 대체 식단",
       );
       const lunch = pickAllowedMeal(
         lunchOptions,
         input.excludedFoods,
         dayIndex + 1,
-        "Lunch plate",
+        "점심 대체 식단",
       );
       const dinner = pickAllowedMeal(
         dinnerOptions,
         input.excludedFoods,
         dayIndex + 2,
-        "Dinner plate",
+        "저녁 대체 식단",
       );
       const snack = pickAllowedMeal(
         snackOptions,
         input.excludedFoods,
         dayIndex + 3,
-        "Snack cup",
+        "간식 대체 구성",
       );
 
       return {
@@ -187,9 +194,9 @@ function buildMockMealPlan(
         explanation: [
           weightGoalExplanations[input.profile.weightGoal],
           input.preferredFoods.length > 0
-            ? `Preferred foods considered: ${input.preferredFoods.join(", ")}.`
-            : "Preferred foods were not provided.",
-          `BMI category considered: ${input.bmi.category}.`,
+            ? `좋아하는 음식(${input.preferredFoods.join(", ")})을 참고했습니다.`
+            : "좋아하는 음식 정보가 없어 기본 균형 식단으로 구성했습니다.",
+          `BMI 분류(${bmiCategoryLabels[input.bmi.category]})를 참고했습니다.`,
         ].join(" "),
       };
     }),
@@ -235,7 +242,7 @@ function parseMealPlanJson(content: unknown) {
   try {
     return JSON.parse(jsonText);
   } catch {
-    throw new Error("AI provider returned invalid JSON.");
+    throw new Error("AI 제공자가 올바른 JSON을 반환하지 않았습니다.");
   }
 }
 
@@ -262,7 +269,8 @@ async function requestAiMealPlan(input: GenerateStructuredMealPlanInput) {
         messages: [
           {
             role: "system",
-            content: "You create structured weekly meal plans and respond only with JSON.",
+            content:
+              "당신은 한국어로 구조화된 일주일 식단표를 만드는 도우미입니다. 반드시 JSON만 반환하세요.",
           },
           {
             role: "user",
@@ -274,7 +282,7 @@ async function requestAiMealPlan(input: GenerateStructuredMealPlanInput) {
   );
 
   if (!response.ok) {
-    throw new Error(`AI provider request failed with status ${response.status}.`);
+    throw new Error(`AI 제공자 요청이 실패했습니다. 상태 코드: ${response.status}`);
   }
 
   const payload = (await response.json()) as {
@@ -288,7 +296,7 @@ async function requestAiMealPlan(input: GenerateStructuredMealPlanInput) {
   const content = payload.choices?.[0]?.message?.content;
 
   if (!content) {
-    throw new Error("AI provider returned an empty response.");
+    throw new Error("AI 제공자가 빈 응답을 반환했습니다.");
   }
 
   return parseMealPlanJson(content);
@@ -305,7 +313,7 @@ export async function generateStructuredMealPlan(
     );
 
     if (!fallbackResult.success) {
-      throw new Error("Deterministic meal plan failed validation.");
+      throw new Error("기본 식단표 검증에 실패했습니다.");
     }
 
     return fallbackResult.data;
@@ -319,13 +327,13 @@ export async function generateStructuredMealPlan(
     );
 
     if (!validatedMealPlan.success) {
-      throw new Error("AI meal plan failed validation.");
+      throw new Error("AI 식단표 검증에 실패했습니다.");
     }
 
     return validatedMealPlan.data;
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Unknown AI generation error.";
-    throw new Error(`AI meal plan generation failed: ${message}`);
+      error instanceof Error ? error.message : "알 수 없는 AI 생성 오류입니다.";
+    throw new Error(`AI 식단표 생성에 실패했습니다: ${message}`);
   }
 }

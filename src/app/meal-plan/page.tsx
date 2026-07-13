@@ -11,20 +11,21 @@ type MealPlanRow = Database["public"]["Tables"]["meal_plans"]["Row"];
 type MealPlanDayRow = Database["public"]["Tables"]["meal_plan_days"]["Row"];
 
 function formatDateLabel(dateString: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
+  return new Intl.DateTimeFormat("ko-KR", {
     day: "numeric",
     weekday: "long",
+    year: "numeric",
+    month: "long",
     timeZone: "UTC",
   }).format(new Date(`${dateString}T00:00:00.000Z`));
 }
 
 function getMealName(value: Json) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return "Unavailable";
+    return "정보 없음";
   }
 
-  return typeof value.name === "string" ? value.name : "Unavailable";
+  return typeof value.name === "string" ? value.name : "정보 없음";
 }
 
 function getMealDescription(value: Json) {
@@ -46,7 +47,7 @@ async function loadLatestMealPlan(userId: string) {
     .limit(1);
 
   if (mealPlanError) {
-    throw new Error("Unable to load meal plans.");
+    throw new Error("식단표를 불러오지 못했습니다.");
   }
 
   const latestMealPlan = mealPlans?.[0] ?? null;
@@ -67,7 +68,7 @@ async function loadLatestMealPlan(userId: string) {
     .order("day_index", { ascending: true });
 
   if (mealPlanDaysError) {
-    throw new Error("Unable to load meal plan days.");
+    throw new Error("식단 상세 정보를 불러오지 못했습니다.");
   }
 
   return {
@@ -82,18 +83,17 @@ function MealPlanHeader({ mealPlan }: { mealPlan: MealPlanRow | null }) {
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div className="space-y-2">
         <p className="text-sm font-semibold uppercase tracking-[0.08em] text-sky-600">
-          Meal Plan
+          식단표
         </p>
         <h1 className="text-3xl font-semibold text-[var(--foreground)]">
-          Weekly meal recommendations
+          일주일 맞춤 식단 추천
         </h1>
         <p className="max-w-2xl text-sm leading-6 text-[var(--muted)]">
-          Review your current week of meals, then regenerate a fresh plan when
-          your goals or recent check-ins change.
+          현재 식단을 확인하고 목표, 음식 취향, 최근 체크인이 바뀌면 새 식단표를 생성하세요.
         </p>
         {mealPlan ? (
           <p className="text-sm text-[var(--muted)]">
-            Week of {formatDateLabel(mealPlan.week_start_date)}
+            시작일: {formatDateLabel(mealPlan.week_start_date)}
           </p>
         ) : null}
       </div>
@@ -123,16 +123,14 @@ export default async function MealPlanPage() {
         <MealPlanHeader mealPlan={currentMealPlan} />
 
         {staleMealPlan ? (
-          <Notice title="Your previous meal plan is stale" tone="warning">
-            Your food preferences or exclusions changed. Regenerate a meal plan
-            before treating this week&apos;s meals as current.
+          <Notice title="기존 식단표를 새로 만들어 주세요" tone="warning">
+            음식 취향이나 제외 음식이 바뀌었습니다. 이번 주 식단으로 사용하기 전에 새 식단표를 생성해 주세요.
           </Notice>
         ) : null}
 
         {!currentMealPlan ? (
-          <Notice title="No meal plan yet" tone="info">
-            Generate your first weekly meal plan to see tailored breakfasts,
-            lunches, dinners, snacks, and day-by-day notes.
+          <Notice title="아직 식단표가 없어요" tone="info">
+            첫 일주일 식단표를 생성하면 아침, 점심, 저녁, 간식과 날짜별 메모를 확인할 수 있어요.
           </Notice>
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
@@ -144,7 +142,7 @@ export default async function MealPlanPage() {
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-sky-600">
-                      Day {day.day_index + 1}
+                      {day.day_index + 1}일차
                     </p>
                     <h2 className="text-xl font-semibold text-[var(--foreground)]">
                       {formatDateLabel(day.date)}
@@ -154,23 +152,23 @@ export default async function MealPlanPage() {
                   <dl className="grid gap-4">
                     {[
                       {
-                        label: "Breakfast",
+                        label: "아침",
                         name: getMealName(day.breakfast),
                         description: getMealDescription(day.breakfast),
                       },
                       {
-                        label: "Lunch",
+                        label: "점심",
                         name: getMealName(day.lunch),
                         description: getMealDescription(day.lunch),
                       },
                       {
-                        label: "Dinner",
+                        label: "저녁",
                         name: getMealName(day.dinner),
                         description: getMealDescription(day.dinner),
                       },
                       {
-                        label: "Snack",
-                        name: day.snack ? getMealName(day.snack) : "Optional",
+                        label: "간식",
+                        name: day.snack ? getMealName(day.snack) : "선택",
                         description: day.snack
                           ? getMealDescription(day.snack)
                           : null,
@@ -208,7 +206,7 @@ export default async function MealPlanPage() {
             href="/dashboard"
             className="text-sm font-semibold text-sky-600 hover:text-sky-500"
           >
-            Back to dashboard
+            대시보드로 돌아가기
           </Link>
         </div>
       </section>

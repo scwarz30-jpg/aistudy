@@ -31,7 +31,7 @@ export default function OnboardingPage() {
     } catch {
       setResult({
         ok: false,
-        message: "We could not save your profile. Please try again.",
+        message: "프로필을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
       });
     } finally {
       setIsPending(false);
@@ -42,27 +42,26 @@ export default function OnboardingPage() {
     <main className="px-4 py-6 sm:px-6 sm:py-10">
       <section className="mx-auto w-full max-w-2xl rounded-lg border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm sm:p-8">
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-sky-600">Onboarding</p>
+          <p className="text-sm font-semibold text-sky-600">프로필 입력</p>
           <h1 className="text-2xl font-semibold text-[var(--foreground)]">
-            Build your baseline health profile
+            기본 건강 프로필을 만들어 주세요
           </h1>
           <p className="text-sm leading-6 text-[var(--muted)]">
-            Share the minimum details we need to personalize meal plans,
-            check-ins, and guidance.
+            식단표, 체크인, 건강 안내를 맞춤화하는 데 필요한 기본 정보를 입력하세요.
           </p>
         </div>
 
         <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField
-              label="Nickname"
+              label="닉네임"
               name="nickname"
-              placeholder="Mina"
+              placeholder="예: 민아"
               required
             />
-            <TextField label="Birth date" name="birthDate" type="date" />
+            <TextField label="생년월일" name="birthDate" type="date" />
             <TextField
-              label="Height (cm)"
+              label="키 (cm)"
               name="heightCm"
               type="number"
               inputMode="decimal"
@@ -72,7 +71,7 @@ export default function OnboardingPage() {
               required
             />
             <TextField
-              label="Weight (kg)"
+              label="몸무게 (kg)"
               name="weightKg"
               type="number"
               inputMode="decimal"
@@ -84,72 +83,70 @@ export default function OnboardingPage() {
           </div>
 
           <label className="flex flex-col gap-2 text-sm font-medium text-[var(--foreground)]">
-            <span>Goal</span>
+            <span>목표</span>
             <select
               name="weightGoal"
               defaultValue="maintain"
               className="min-h-12 rounded-lg border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
             >
-              <option value="lose">Lose weight</option>
-              <option value="maintain">Maintain</option>
-              <option value="gain">Gain weight</option>
+              <option value="lose">감량</option>
+              <option value="maintain">유지</option>
+              <option value="gain">증량</option>
             </select>
           </label>
 
           <div className="grid gap-4">
             <TextField
-              label="Health concerns"
+              label="건강 고민"
               name="healthConcerns"
               textarea
-              placeholder="Fatigue, digestion discomfort, blood sugar management"
-              hint="Separate multiple concerns with commas or line breaks."
+              placeholder="예: 피로, 소화 불편, 혈당 관리"
+              hint="쉼표 또는 줄바꿈으로 여러 항목을 입력할 수 있어요."
             />
             <TextField
-              label="Current condition"
+              label="현재 컨디션"
               name="currentCondition"
               textarea
-              placeholder="Briefly describe your recent sleep, stress, and meal rhythm."
+              placeholder="최근 수면, 스트레스, 식사 리듬을 간단히 적어 주세요."
             />
             <TextField
-              label="Favorite foods"
+              label="좋아하는 음식"
               name="favoriteFoods"
               textarea
-              placeholder="Salmon, tofu, bananas"
-              hint="Separate multiple foods with commas or line breaks."
+              placeholder="예: 연어, 두부, 바나나"
+              hint="쉼표 또는 줄바꿈으로 여러 음식을 입력할 수 있어요."
             />
             <TextField
-              label="Foods to avoid"
+              label="피하고 싶은 음식"
               name="avoidedFoods"
               textarea
-              placeholder="Peanuts, spicy food"
+              placeholder="예: 땅콩, 매운 음식"
             />
             <TextField
-              label="Allergies"
+              label="알레르기"
               name="allergies"
               textarea
-              placeholder="Milk, shellfish"
+              placeholder="예: 우유, 갑각류"
             />
           </div>
 
-          <Notice tone="warning" title="Health notice">
+          <Notice tone="warning" title="건강 안내">
             <p>
-              This information is for general wellness guidance only and does
-              not replace medical diagnosis or treatment.
+              입력한 정보는 건강 관리를 위한 일반 참고 정보이며, 진단이나 치료를 대신하지 않습니다.
             </p>
             <p className="mt-2">
-              If you have symptoms or take medication, speak with a qualified
-              professional first.
+              증상이 있거나 약을 복용 중이라면 먼저 의료 전문가와 상담해 주세요.
             </p>
           </Notice>
 
           {result && !result.ok ? (
-            <Notice tone="error" title="Could not save your profile">
+            <Notice tone="error" title="프로필을 저장하지 못했습니다">
               {result.message}
             </Notice>
           ) : null}
 
           <Button type="submit" pending={isPending}>
-            Save profile
+            프로필 저장
           </Button>
         </form>
       </section>

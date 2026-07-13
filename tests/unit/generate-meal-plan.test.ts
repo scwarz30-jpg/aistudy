@@ -72,7 +72,7 @@ describe("generateStructuredMealPlan", () => {
 
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(result.days).toHaveLength(7);
-    expect(result.days[0].breakfast.name).toBe("Greek yogurt berry bowl");
+    expect(result.days[0].breakfast.name).toBe("그릭요거트 베리 볼");
   });
 
   it("throws a provider error instead of silently returning the mock when an API key is configured", async () => {
@@ -86,7 +86,7 @@ describe("generateStructuredMealPlan", () => {
     const { generateStructuredMealPlan } = await import("@/lib/ai/generate");
 
     await expect(generateStructuredMealPlan(buildInput())).rejects.toThrow(
-      "AI meal plan generation failed: AI provider request failed with status 502.",
+      "AI 식단표 생성에 실패했습니다: AI 제공자 요청이 실패했습니다. 상태 코드: 502",
     );
   });
 
@@ -123,7 +123,7 @@ describe("generateStructuredMealPlan", () => {
     const { generateStructuredMealPlan } = await import("@/lib/ai/generate");
 
     await expect(generateStructuredMealPlan(buildInput())).rejects.toThrow(
-      "AI meal plan generation failed: AI meal plan failed validation.",
+      "AI 식단표 생성에 실패했습니다: AI 식단표 검증에 실패했습니다.",
     );
   });
 });
