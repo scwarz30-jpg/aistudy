@@ -9,6 +9,43 @@ import { Notice } from "@/components/ui/Notice";
 import { TextField } from "@/components/ui/TextField";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
+type LoginAuthError = {
+  code?: string;
+  message: string;
+  status?: number;
+};
+
+function getLoginErrorMessage(error: LoginAuthError) {
+  const code = error.code ?? "no_code";
+  const message = error.message;
+  const normalizedMessage = message.toLowerCase();
+  const originalError = `Supabase 원문: [${code}] ${message}`;
+
+  if (
+    code === "email_not_confirmed" ||
+    normalizedMessage.includes("email not confirmed")
+  ) {
+    return `이메일 인증이 아직 완료되지 않았습니다. 메일함에서 인증 메일을 확인하거나, 개발 중이라면 Supabase에서 이메일 인증을 잠시 꺼 주세요. ${originalError}`;
+  }
+
+  if (
+    code === "invalid_credentials" ||
+    normalizedMessage.includes("invalid login credentials")
+  ) {
+    return `이메일 또는 비밀번호가 맞지 않습니다. 가입한 이메일과 비밀번호를 다시 확인해 주세요. ${originalError}`;
+  }
+
+  if (
+    normalizedMessage.includes("api key") ||
+    normalizedMessage.includes("project") ||
+    normalizedMessage.includes("fetch")
+  ) {
+    return `배포 환경의 Supabase 설정을 확인해야 합니다. Vercel Production 환경변수에 Supabase URL과 Publishable Key가 들어 있는지 확인해 주세요. ${originalError}`;
+  }
+
+  return `로그인에 실패했습니다. ${originalError}`;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -26,18 +63,21 @@ export default function LoginPage() {
 
       const supabase = createBrowserSupabaseClient();
       const { error } = await supabase.auth.signInWithPassword({
-        email: typeof email === "string" ? email : "",
+        email: typeof email === "string" ? email.trim() : "",
         password: typeof password === "string" ? password : "",
       });
 
       if (error) {
-        setErrorMessage("로그인에 실패했어요. 이메일과 비밀번호를 다시 확인해 주세요.");
+        setErrorMessage(getLoginErrorMessage(error));
         return;
       }
 
       router.replace("/dashboard");
+      router.refresh();
     } catch {
-      setErrorMessage("로그인 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.");
+      setErrorMessage(
+        "로그인 중 문제가 생겼습니다. Vercel 환경변수와 Supabase 프로젝트 설정을 확인해 주세요.",
+      );
     } finally {
       setIsPending(false);
     }
@@ -62,7 +102,7 @@ export default function LoginPage() {
             name="email"
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder="you@gmail.com"
             required
           />
           <TextField
@@ -86,7 +126,7 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-4 text-sm text-[var(--muted)]">
-          계정이 아직 없나요?{" "}
+          아직 계정이 없나요?{" "}
           <Link className="font-semibold text-sky-600" href="/signup">
             회원가입
           </Link>
