@@ -178,6 +178,12 @@ export default async function DashboardPage() {
               {profile ? "오늘 체크인 입력" : "프로필 먼저 입력"}
             </Link>
             <Link
+              href="/onboarding"
+              className="inline-flex min-h-12 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:bg-white"
+            >
+              프로필 입력
+            </Link>
+            <Link
               href="/meal-plan"
               className="inline-flex min-h-12 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:bg-white"
             >
@@ -360,6 +366,9 @@ export default async function DashboardPage() {
                             </dd>
                           </div>
                         </dl>
+                        <div className="mt-4 max-w-xs">
+                          <RegenerateMealPlanButton />
+                        </div>
                       </div>
                     ) : (
                       <p className="text-sm leading-6 text-[var(--muted)]">

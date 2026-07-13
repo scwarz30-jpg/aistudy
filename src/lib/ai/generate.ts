@@ -150,9 +150,68 @@ function addDays(dateString: string, dayOffset: number) {
   return date.toISOString().slice(0, 10);
 }
 
+function buildCheckinSignature(
+  input: GenerateStructuredMealPlanInput["latestCheckin"],
+) {
+  if (!input) {
+    return "";
+  }
+
+  return JSON.stringify({
+    conditionScore: input.conditionScore,
+    sleepQuality: input.sleepQuality,
+    stressLevel: input.stressLevel,
+    exercisedToday: input.exercisedToday,
+    appetite: input.appetite,
+    digestion: input.digestion,
+    symptoms: input.symptoms,
+    symptomSeverity: input.symptomSeverity,
+    waterIntake: input.waterIntake,
+    notes: input.notes,
+  });
+}
+
+function hashText(value: string) {
+  return Array.from(value).reduce(
+    (hash, character) => (hash * 31 + character.charCodeAt(0)) % 997,
+    0,
+  );
+}
+
+function buildCheckinExplanation(
+  input: GenerateStructuredMealPlanInput["latestCheckin"],
+) {
+  if (!input) {
+    return "최근 체크인이 없어 프로필을 기준으로 구성했습니다.";
+  }
+
+  const details = [
+    `컨디션 ${input.conditionScore}/10`,
+    `수면 ${input.sleepQuality}/10`,
+    `스트레스 ${input.stressLevel}/10`,
+  ];
+
+  if (input.appetite) {
+    details.push(`식욕 ${input.appetite}`);
+  }
+
+  if (input.digestion) {
+    details.push(`소화 ${input.digestion}`);
+  }
+
+  if ((input.symptomSeverity ?? 0) > 0) {
+    details.push(`증상 강도 ${input.symptomSeverity}/10`);
+  }
+
+  return `최근 체크인(${details.join(", ")})을 반영해 오늘 몸상태에 맞게 다시 배치했습니다.`;
+}
+
 function buildMockMealPlan(
   input: GenerateStructuredMealPlanInput,
 ): MealPlanInput {
+  const checkinOffset = hashText(buildCheckinSignature(input.latestCheckin));
+  const checkinExplanation = buildCheckinExplanation(input.latestCheckin);
+
   return {
     weekStartDate: input.weekStartDate,
     status: "active",
@@ -162,25 +221,25 @@ function buildMockMealPlan(
       const breakfast = pickAllowedMeal(
         breakfastOptions,
         input.excludedFoods,
-        dayIndex,
+        dayIndex + checkinOffset,
         "아침 대체 식단",
       );
       const lunch = pickAllowedMeal(
         lunchOptions,
         input.excludedFoods,
-        dayIndex + 1,
+        dayIndex + checkinOffset + 1,
         "점심 대체 식단",
       );
       const dinner = pickAllowedMeal(
         dinnerOptions,
         input.excludedFoods,
-        dayIndex + 2,
+        dayIndex + checkinOffset + 2,
         "저녁 대체 식단",
       );
       const snack = pickAllowedMeal(
         snackOptions,
         input.excludedFoods,
-        dayIndex + 3,
+        dayIndex + checkinOffset + 3,
         "간식 대체 구성",
       );
 
@@ -196,6 +255,7 @@ function buildMockMealPlan(
           input.preferredFoods.length > 0
             ? `좋아하는 음식(${input.preferredFoods.join(", ")})을 참고했습니다.`
             : "좋아하는 음식 정보가 없어 기본 균형 식단으로 구성했습니다.",
+          checkinExplanation,
           `BMI 분류(${bmiCategoryLabels[input.bmi.category]})를 참고했습니다.`,
         ].join(" "),
       };
