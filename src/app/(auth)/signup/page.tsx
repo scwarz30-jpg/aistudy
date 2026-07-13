@@ -9,6 +9,24 @@ import { Notice } from "@/components/ui/Notice";
 import { TextField } from "@/components/ui/TextField";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
+function getSignupErrorMessage(error: { code?: string; message: string }) {
+  const message = error.message.toLowerCase();
+
+  if (error.code === "email_address_invalid" || message.includes("email")) {
+    return "이메일 주소가 거부되었어요. test@example.com 같은 테스트 주소 대신 실제로 받을 수 있는 Gmail, Naver 등의 이메일을 입력해 주세요.";
+  }
+
+  if (message.includes("rate") || message.includes("too many")) {
+    return "회원가입 요청이 너무 많아 잠시 제한되었어요. 몇 분 뒤 다시 시도해 주세요.";
+  }
+
+  if (message.includes("password")) {
+    return "비밀번호 조건을 만족하지 못했어요. 8자 이상으로 입력해 주세요.";
+  }
+
+  return `회원가입에 실패했어요. Supabase 응답: ${error.message}`;
+}
+
 export default function SignupPage() {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -33,24 +51,20 @@ export default function SignupPage() {
       });
 
       if (error) {
-        setErrorMessage(
-          "We could not create your account. Double-check your details and try again.",
-        );
+        setErrorMessage(getSignupErrorMessage(error));
         return;
       }
 
       if (!data.session) {
         setSuccessMessage(
-          "Check your email to confirm the account request before continuing.",
+          "인증 메일을 보냈어요. 메일함에서 계정을 확인한 뒤 로그인해 주세요.",
         );
         return;
       }
 
       router.replace("/onboarding");
     } catch {
-      setErrorMessage(
-        "Something went wrong while creating the account. Please try again.",
-      );
+      setErrorMessage("회원가입 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.");
     } finally {
       setIsPending(false);
     }
@@ -60,13 +74,12 @@ export default function SignupPage() {
     <main className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-6">
       <section className="w-full max-w-md rounded-lg border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm sm:p-8">
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-sky-600">Sign up</p>
+          <p className="text-sm font-semibold text-sky-600">회원가입</p>
           <h1 className="text-2xl font-semibold text-[var(--foreground)]">
-            Start managing your health
+            건강 관리를 시작하세요
           </h1>
           <p className="text-sm leading-6 text-[var(--muted)]">
-            Create your account with an email address and password, then move
-            straight into onboarding.
+            이메일과 비밀번호로 계정을 만들고 기본 건강 정보를 입력하세요.
           </p>
         </div>
 
@@ -76,7 +89,7 @@ export default function SignupPage() {
             name="email"
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder="you@gmail.com"
             required
           />
           <TextField
@@ -84,31 +97,31 @@ export default function SignupPage() {
             name="password"
             type="password"
             autoComplete="new-password"
-            placeholder="At least 8 characters"
+            placeholder="8자 이상"
             required
           />
 
           {successMessage ? (
-            <Notice tone="success" title="Check your email">
+            <Notice tone="success" title="이메일을 확인해 주세요">
               {successMessage}
             </Notice>
           ) : null}
 
           {errorMessage ? (
-            <Notice tone="error" title="Sign-up failed">
+            <Notice tone="error" title="회원가입에 실패했습니다">
               {errorMessage}
             </Notice>
           ) : null}
 
           <Button type="submit" pending={isPending}>
-            Create account
+            계정 만들기
           </Button>
         </form>
 
         <p className="mt-4 text-sm text-[var(--muted)]">
-          Already have an account?{" "}
+          이미 계정이 있나요?{" "}
           <Link className="font-semibold text-sky-600" href="/login">
-            Log in
+            로그인
           </Link>
         </p>
       </section>
