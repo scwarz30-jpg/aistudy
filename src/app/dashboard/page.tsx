@@ -204,7 +204,7 @@ export default async function DashboardPage() {
                   </p>
                   <h2 className="text-2xl font-semibold text-[var(--foreground)]">
                     {hasCheckedInToday
-                      ? "Today&apos;s entry is recorded"
+                      ? "오늘 체크인을 기록했어요"
                       : "아직 오늘 체크인이 없어요"}
                   </h2>
                 </div>
@@ -325,7 +325,7 @@ export default async function DashboardPage() {
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
                             {todayPlanDay.date === todayDate
-                              ? "Today&apos;s plan"
+                              ? "오늘 식단"
                               : "가장 가까운 식단"}
                           </p>
                           <h3 className="mt-1 text-lg font-semibold text-[var(--foreground)]">
