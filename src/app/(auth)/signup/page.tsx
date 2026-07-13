@@ -9,22 +9,42 @@ import { Notice } from "@/components/ui/Notice";
 import { TextField } from "@/components/ui/TextField";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
-function getSignupErrorMessage(error: { code?: string; message: string }) {
-  const message = error.message.toLowerCase();
+type SignupAuthError = {
+  code?: string;
+  message: string;
+  status?: number;
+};
 
-  if (error.code === "email_address_invalid" || message.includes("email")) {
-    return "이메일 주소가 거부되었어요. test@example.com 같은 테스트 주소 대신 실제로 받을 수 있는 Gmail, Naver 등의 이메일을 입력해 주세요.";
+function getSignupErrorMessage(error: SignupAuthError) {
+  const code = error.code ?? "no_code";
+  const message = error.message;
+  const normalizedMessage = message.toLowerCase();
+  const originalError = `Supabase 원문: [${code}] ${message}`;
+
+  if (code === "email_address_invalid") {
+    return `이메일 주소 형식이 Supabase에서 거부되었습니다. 입력한 이메일에 공백, 한글 문자, 빠진 @ 기호가 없는지 확인해 주세요. ${originalError}`;
   }
 
-  if (message.includes("rate") || message.includes("too many")) {
-    return "회원가입 요청이 너무 많아 잠시 제한되었어요. 몇 분 뒤 다시 시도해 주세요.";
+  if (
+    code === "over_email_send_rate_limit" ||
+    normalizedMessage.includes("rate") ||
+    normalizedMessage.includes("too many")
+  ) {
+    return `회원가입 또는 인증 메일 요청이 너무 많아 잠시 제한되었습니다. 몇 분 뒤 다시 시도해 주세요. ${originalError}`;
   }
 
-  if (message.includes("password")) {
-    return "비밀번호 조건을 만족하지 못했어요. 8자 이상으로 입력해 주세요.";
+  if (
+    code === "weak_password" ||
+    normalizedMessage.includes("password")
+  ) {
+    return `비밀번호 조건을 만족하지 못했습니다. 8자 이상으로 입력해 주세요. ${originalError}`;
   }
 
-  return `회원가입에 실패했어요. Supabase 응답: ${error.message}`;
+  if (normalizedMessage.includes("confirmation email")) {
+    return `계정은 만들 수 있지만 인증 메일 발송 단계에서 실패했습니다. Supabase Auth 메일 설정이나 발송 제한을 확인해야 합니다. ${originalError}`;
+  }
+
+  return `회원가입에 실패했습니다. ${originalError}`;
 }
 
 export default function SignupPage() {
@@ -46,8 +66,11 @@ export default function SignupPage() {
 
       const supabase = createBrowserSupabaseClient();
       const { data, error } = await supabase.auth.signUp({
-        email: typeof email === "string" ? email : "",
+        email: typeof email === "string" ? email.trim() : "",
         password: typeof password === "string" ? password : "",
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`,
+        },
       });
 
       if (error) {
@@ -57,14 +80,14 @@ export default function SignupPage() {
 
       if (!data.session) {
         setSuccessMessage(
-          "인증 메일을 보냈어요. 메일함에서 계정을 확인한 뒤 로그인해 주세요.",
+          "인증 메일을 보냈습니다. 메일함에서 계정을 확인한 뒤 로그인해 주세요.",
         );
         return;
       }
 
       router.replace("/onboarding");
     } catch {
-      setErrorMessage("회원가입 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.");
+      setErrorMessage("회원가입 중 문제가 생겼습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
       setIsPending(false);
     }
@@ -85,7 +108,7 @@ export default function SignupPage() {
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <TextField
-            label="Email"
+            label="이메일"
             name="email"
             type="email"
             autoComplete="email"
@@ -93,7 +116,7 @@ export default function SignupPage() {
             required
           />
           <TextField
-            label="Password"
+            label="비밀번호"
             name="password"
             type="password"
             autoComplete="new-password"
