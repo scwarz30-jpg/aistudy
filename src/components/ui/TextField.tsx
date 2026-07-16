@@ -21,11 +21,11 @@ export function TextField(props: InputProps | TextareaProps) {
   const { error, hint, label, name, textarea = false, ...fieldProps } = props;
   const describedBy = error ? `${name}-error` : hint ? `${name}-hint` : undefined;
   const sharedClassName =
-    "min-h-12 w-full rounded-lg border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--foreground)] outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-100";
+    "min-h-12 w-full rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--foreground)] outline-none transition placeholder:text-stone-400 focus:border-[var(--foreground)] focus:ring-2 focus:ring-[rgba(159,207,208,0.55)]";
 
   return (
-    <label className="flex w-full flex-col gap-2 text-sm font-medium text-[var(--foreground)]">
-      <span>{label}</span>
+    <label className="flex w-full flex-col gap-2 text-sm font-bold text-[var(--foreground)]">
+      <span className="px-1">{label}</span>
       {textarea ? (
         <textarea
           id={name}

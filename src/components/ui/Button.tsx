@@ -12,9 +12,9 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const variantClassNames: Record<ButtonVariant, string> = {
   primary:
-    "bg-sky-600 text-white shadow-sm hover:bg-sky-500 disabled:bg-sky-300",
+    "border-2 border-[var(--border)] bg-[var(--accent)] text-[var(--foreground)] shadow-[0_3px_0_var(--border)] hover:bg-[var(--accent-strong)] disabled:bg-[var(--surface)] disabled:shadow-none",
   secondary:
-    "border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] hover:bg-white disabled:text-[var(--muted)]",
+    "border-2 border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] hover:bg-white disabled:text-[var(--muted)]",
 };
 
 export function Button({
@@ -29,7 +29,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={`inline-flex min-h-12 w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:cursor-not-allowed ${variantClassNames[variant]} ${className}`.trim()}
+      className={`inline-flex min-h-12 w-full items-center justify-center rounded-full px-5 py-3 text-sm font-extrabold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--foreground)] disabled:cursor-not-allowed ${variantClassNames[variant]} ${className}`.trim()}
       disabled={disabled || pending}
       aria-busy={pending}
       {...props}

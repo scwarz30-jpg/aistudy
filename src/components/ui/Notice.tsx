@@ -9,10 +9,10 @@ type NoticeProps = {
 };
 
 const toneClassNames: Record<NoticeTone, string> = {
-  info: "border-sky-200 bg-sky-50 text-sky-950",
-  warning: "border-amber-200 bg-amber-50 text-amber-950",
-  error: "border-rose-200 bg-rose-50 text-rose-950",
-  success: "border-emerald-200 bg-emerald-50 text-emerald-950",
+  info: "border-[rgba(29,26,21,0.18)] bg-[#fffdf7] text-[var(--foreground)]",
+  warning: "border-[#d5b46d] bg-[#fff2c8] text-[var(--foreground)]",
+  error: "border-[#d98282] bg-[#ffe2dc] text-[var(--foreground)]",
+  success: "border-[#91beb0] bg-[#e0f1e8] text-[var(--foreground)]",
 };
 
 export function Notice({
@@ -22,7 +22,7 @@ export function Notice({
 }: NoticeProps) {
   return (
     <div
-      className={`rounded-lg border px-4 py-3 ${toneClassNames[tone]}`}
+      className={`rounded-2xl border px-4 py-3 ${toneClassNames[tone]}`}
       role={tone === "error" ? "alert" : "status"}
     >
       <div className="space-y-1">

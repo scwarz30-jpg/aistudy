@@ -1,23 +1,5 @@
 import Link from "next/link";
 
-const primaryActions = [
-  {
-    href: "/signup",
-    label: "회원가입",
-    description: "이메일과 비밀번호로 계정을 만들고 건강 프로필을 저장합니다.",
-  },
-  {
-    href: "/login",
-    label: "로그인",
-    description: "이미 만든 계정으로 들어가 식단과 체크인 기록을 이어 봅니다.",
-  },
-  {
-    href: "/onboarding",
-    label: "프로필 입력",
-    description: "키, 몸무게, 목표, 건강 고민, 선호 음식과 제외 음식을 입력합니다.",
-  },
-];
-
 const featureLinks = [
   {
     href: "/dashboard",
@@ -48,62 +30,84 @@ const featureLinks = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-10">
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <div className="flex flex-col gap-6 rounded-lg border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm sm:p-8">
-          <div className="space-y-4">
-            <p className="text-sm font-semibold uppercase text-sky-600">
-              건강 관리 앱
-            </p>
-            <h1 className="text-3xl font-semibold text-[var(--foreground)] sm:text-4xl">
-              내 몸상태에 맞춰 식단과 건강 루틴을 관리하세요
-            </h1>
-            <p className="max-w-3xl text-base leading-7 text-[var(--muted)]">
-              나이, 생년월일, 키, 몸무게, 목표, 건강 고민, 좋아하는 음식과
-              피하고 싶은 음식을 바탕으로 일주일 식단표를 만들고, 매일
-              체크인으로 현재 몸상태에 맞는 조정 안내를 받을 수 있습니다.
-            </p>
+    <main>
+      <section className="flex min-h-[calc(100svh-140px)] flex-col justify-between gap-8">
+        <div className="flex justify-between text-xs font-extrabold text-[var(--muted)]">
+          <span>Daily Care</span>
+          <span>Seoul</span>
+        </div>
+
+        <div className="space-y-8">
+          <div className="relative mx-auto h-64 w-full max-w-[300px]">
+            <div className="absolute left-4 top-8 h-28 w-44 -rotate-6 rounded-3xl border-2 border-[var(--border)] bg-[#fffdf7] shadow-[8px_8px_0_#f3b7a7]" />
+            <div className="absolute right-3 top-3 h-32 w-24 rotate-6 rounded-2xl border-2 border-[var(--border)] bg-[var(--accent)] p-3">
+              <div className="h-3 w-12 rounded-full bg-[var(--foreground)]" />
+              <div className="mt-4 space-y-2">
+                <div className="h-2 rounded-full bg-white/80" />
+                <div className="h-2 w-3/4 rounded-full bg-white/80" />
+                <div className="h-2 w-1/2 rounded-full bg-white/80" />
+              </div>
+            </div>
+            <div className="absolute bottom-7 left-7 h-28 w-48 rounded-3xl border-2 border-[var(--border)] bg-[#f6eadc] p-4 shadow-[8px_8px_0_#15130f]">
+              <div className="text-sm font-black">Today</div>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {["아침", "점심", "저녁"].map((meal) => (
+                  <div
+                    key={meal}
+                    className="rounded-2xl border border-[var(--border)] bg-[#fffdf7] px-2 py-3 text-center text-[10px] font-black"
+                  >
+                    {meal}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="absolute bottom-2 right-10 flex h-16 w-16 items-center justify-center rounded-full border-2 border-[var(--border)] bg-[#fff2c8] text-2xl font-black">
+              7
+            </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            {primaryActions.map((action) => (
-              <Link
-                key={action.href}
-                href={action.href}
-                className="rounded-lg border border-[var(--border)] bg-[var(--background)] p-4 transition hover:border-sky-400 hover:bg-white"
-              >
-                <span className="text-base font-semibold text-[var(--foreground)]">
-                  {action.label}
-                </span>
-                <span className="mt-2 block text-sm leading-6 text-[var(--muted)]">
-                  {action.description}
-                </span>
-              </Link>
-            ))}
+          <div className="space-y-4 text-center">
+            <h1 className="text-[2.45rem] font-black leading-[1.08] text-[var(--foreground)]">
+              내 몸상태에 맞춘
+              <br />
+              건강 루틴
+            </h1>
+            <p className="mx-auto max-w-[290px] text-sm font-medium leading-6 text-[var(--muted)]">
+              매일 체크인하고 오늘 이후 식단과 관리 루틴을 몸상태에 맞게 조정하세요.
+            </p>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="space-y-3">
+          <Link
+            href="/signup"
+            className="inline-flex min-h-14 w-full items-center justify-center rounded-full border-2 border-[var(--border)] bg-[var(--accent)] px-5 text-sm font-black text-[var(--foreground)] shadow-[0_3px_0_var(--border)]"
+          >
+            시작하기
+          </Link>
+          <Link
+            href="/login"
+            className="inline-flex min-h-14 w-full items-center justify-center rounded-full border-2 border-[var(--border)] bg-[#fffdf7] px-5 text-sm font-black text-[var(--foreground)]"
+          >
+            로그인
+          </Link>
+        </div>
+
+        <div className="grid gap-3">
           {featureLinks.map((feature) => (
             <Link
               key={feature.href}
               href={feature.href}
-              className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm transition hover:border-sky-400 hover:shadow-md"
+              className="rounded-3xl border border-[rgba(29,26,21,0.18)] bg-[#fffdf7] p-4 transition hover:border-[var(--border)]"
             >
-              <h2 className="text-xl font-semibold text-[var(--foreground)]">
+              <h2 className="text-base font-black text-[var(--foreground)]">
                 {feature.title}
               </h2>
-              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+              <p className="mt-1 text-xs leading-5 text-[var(--muted)]">
                 {feature.body}
               </p>
             </Link>
           ))}
-        </div>
-
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-950">
-          이 앱의 식단, 운동, 일반의약품 정보는 건강 관리를 돕는 일반 정보이며
-          진단이나 처방이 아닙니다. 심한 증상이나 지속되는 불편감이 있으면
-          의사 또는 약사와 상담하세요.
         </div>
       </section>
     </main>
