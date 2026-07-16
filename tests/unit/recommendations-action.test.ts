@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const authGetUser = vi.fn();
+function addDays(dateString: string, dayOffset: number) {
+  const date = new Date(`${dateString}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + dayOffset);
+  return date.toISOString().slice(0, 10);
+}
+
 const generateStructuredMealPlan = vi.fn(async (input) => ({
   weekStartDate: input.weekStartDate,
   status: "active",
@@ -8,7 +14,7 @@ const generateStructuredMealPlan = vi.fn(async (input) => ({
   sourceCheckinId: input.sourceCheckinId,
   days: Array.from({ length: 7 }, (_, dayIndex) => ({
     dayIndex,
-    date: `2026-07-${String(dayIndex + 6).padStart(2, "0")}`,
+    date: addDays(input.weekStartDate, dayIndex),
     breakfast: { name: `Breakfast ${dayIndex + 1}` },
     lunch: { name: `Lunch ${dayIndex + 1}` },
     dinner: { name: `Dinner ${dayIndex + 1}` },
@@ -28,6 +34,18 @@ const checkinChain = {
   order: vi.fn(),
   limit: vi.fn(),
 };
+const mealPlansSelectChain = {
+  select: vi.fn(),
+  eq: vi.fn(),
+  order: vi.fn(),
+  limit: vi.fn(),
+};
+const mealPlanDaysSelectChain = {
+  select: vi.fn(),
+  eq: vi.fn(),
+  lt: vi.fn(),
+  order: vi.fn(),
+};
 const mealPlansInsert = vi.fn();
 const mealPlanDaysInsert = vi.fn();
 const mealPlansDeleteEq = vi.fn();
@@ -43,6 +61,7 @@ const from = vi.fn((table: string) => {
 
   if (table === "meal_plans") {
     return {
+      select: mealPlansSelectChain.select,
       insert: mealPlansInsert,
       delete: mealPlansDelete,
     };
@@ -50,6 +69,7 @@ const from = vi.fn((table: string) => {
 
   if (table === "meal_plan_days") {
     return {
+      select: mealPlanDaysSelectChain.select,
       insert: mealPlanDaysInsert,
     };
   }
@@ -73,6 +93,7 @@ vi.mock("@/lib/ai/generate", () => ({
 describe("generateWeeklyMealPlan", () => {
   beforeEach(() => {
     vi.resetModules();
+    vi.useRealTimers();
     authGetUser.mockReset();
     from.mockClear();
     generateStructuredMealPlan.mockClear();
@@ -100,6 +121,30 @@ describe("generateWeeklyMealPlan", () => {
     checkinChain.eq.mockReturnValue(checkinChain);
     checkinChain.order.mockReturnValue(checkinChain);
     checkinChain.limit.mockResolvedValue({
+      data: [],
+      error: null,
+    });
+
+    mealPlansSelectChain.select.mockReset();
+    mealPlansSelectChain.eq.mockReset();
+    mealPlansSelectChain.order.mockReset();
+    mealPlansSelectChain.limit.mockReset();
+    mealPlansSelectChain.select.mockReturnValue(mealPlansSelectChain);
+    mealPlansSelectChain.eq.mockReturnValue(mealPlansSelectChain);
+    mealPlansSelectChain.order.mockReturnValue(mealPlansSelectChain);
+    mealPlansSelectChain.limit.mockResolvedValue({
+      data: [],
+      error: null,
+    });
+
+    mealPlanDaysSelectChain.select.mockReset();
+    mealPlanDaysSelectChain.eq.mockReset();
+    mealPlanDaysSelectChain.lt.mockReset();
+    mealPlanDaysSelectChain.order.mockReset();
+    mealPlanDaysSelectChain.select.mockReturnValue(mealPlanDaysSelectChain);
+    mealPlanDaysSelectChain.eq.mockReturnValue(mealPlanDaysSelectChain);
+    mealPlanDaysSelectChain.lt.mockReturnValue(mealPlanDaysSelectChain);
+    mealPlanDaysSelectChain.order.mockResolvedValue({
       data: [],
       error: null,
     });
@@ -196,5 +241,91 @@ describe("generateWeeklyMealPlan", () => {
     expect(generateStructuredMealPlan).not.toHaveBeenCalled();
     expect(mealPlansInsert).not.toHaveBeenCalled();
     expect(mealPlanDaysInsert).not.toHaveBeenCalled();
+  });
+
+  it("preserves past days from this week's latest meal plan when regenerating", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-16T02:00:00.000Z"));
+    authGetUser.mockResolvedValue({
+      data: {
+        user: {
+          id: "user-123",
+        },
+      },
+      error: null,
+    });
+    mealPlansSelectChain.limit.mockResolvedValue({
+      data: [
+        {
+          id: "meal-plan-old",
+          user_id: "user-123",
+          week_start_date: "2026-07-13",
+          source_profile_snapshot: {},
+          source_checkin_id: null,
+          status: "active",
+          created_at: "2026-07-13T00:00:00.000Z",
+          updated_at: "2026-07-13T00:00:00.000Z",
+        },
+      ],
+      error: null,
+    });
+    mealPlanDaysSelectChain.order.mockResolvedValue({
+      data: [
+        {
+          id: "day-1",
+          user_id: "user-123",
+          meal_plan_id: "meal-plan-old",
+          day_index: 0,
+          date: "2026-07-13",
+          breakfast: { name: "지난 월요일 아침" },
+          lunch: { name: "지난 월요일 점심" },
+          dinner: { name: "지난 월요일 저녁" },
+          snack: null,
+          explanation: "보존된 식단",
+        },
+        {
+          id: "day-2",
+          user_id: "user-123",
+          meal_plan_id: "meal-plan-old",
+          day_index: 2,
+          date: "2026-07-15",
+          breakfast: { name: "지난 수요일 아침" },
+          lunch: { name: "지난 수요일 점심" },
+          dinner: { name: "지난 수요일 저녁" },
+          snack: null,
+          explanation: "보존된 식단",
+        },
+      ],
+      error: null,
+    });
+
+    const { generateWeeklyMealPlan } = await import(
+      "@/app/actions/recommendations"
+    );
+
+    await expect(generateWeeklyMealPlan("user-123")).resolves.toEqual({
+      mealPlanId: "meal-plan-123",
+    });
+
+    const insertedDays = mealPlanDaysInsert.mock.calls[0][0];
+    expect(insertedDays).toHaveLength(7);
+    expect(insertedDays[0]).toMatchObject({
+      date: "2026-07-13",
+      breakfast: { name: "지난 월요일 아침" },
+      explanation: "보존된 식단",
+    });
+    expect(insertedDays[2]).toMatchObject({
+      date: "2026-07-15",
+      breakfast: { name: "지난 수요일 아침" },
+      explanation: "보존된 식단",
+    });
+    expect(insertedDays[3]).toMatchObject({
+      date: "2026-07-16",
+      breakfast: { name: "Breakfast 4" },
+    });
+    expect(mealPlanDaysSelectChain.lt).toHaveBeenCalledWith(
+      "date",
+      "2026-07-16",
+    );
   });
 });

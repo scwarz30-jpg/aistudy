@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { generateStructuredMealPlan } from "@/lib/ai/generate";
-import { getSeoulWeekStartDate } from "@/lib/date/seoul";
+import { getSeoulDateString, getSeoulWeekStartDate } from "@/lib/date/seoul";
 import { profileSchema, safeParseMealPlan } from "@/lib/health/schema";
 import {
   buildFoodConstraints,
@@ -15,6 +15,7 @@ import type { Database, Json } from "@/lib/supabase/types";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 type CheckinRow = Database["public"]["Tables"]["daily_checkins"]["Row"];
+type MealPlanDayRow = Database["public"]["Tables"]["meal_plan_days"]["Row"];
 
 function asStringArray(value: Json) {
   return Array.isArray(value)
@@ -54,6 +55,45 @@ function mapCheckinRowToInput(row: CheckinRow | null) {
     waterIntake: row.water_intake,
     notes: row.notes,
   };
+}
+
+async function loadPastMealPlanDays(
+  supabase: Awaited<ReturnType<typeof createServerActionSupabaseClient>>,
+  userId: string,
+  weekStartDate: string,
+  todayDate: string,
+) {
+  const { data: mealPlans, error: mealPlanError } = await supabase
+    .from("meal_plans")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("week_start_date", weekStartDate)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (mealPlanError) {
+    throw new Error("기존 식단표를 불러오지 못했습니다.");
+  }
+
+  const latestMealPlan = mealPlans?.[0] ?? null;
+
+  if (!latestMealPlan) {
+    return [] as MealPlanDayRow[];
+  }
+
+  const { data: mealPlanDays, error: mealPlanDaysError } = await supabase
+    .from("meal_plan_days")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("meal_plan_id", latestMealPlan.id)
+    .lt("date", todayDate)
+    .order("day_index", { ascending: true });
+
+  if (mealPlanDaysError) {
+    throw new Error("기존 식단 상세 정보를 불러오지 못했습니다.");
+  }
+
+  return mealPlanDays ?? [];
 }
 
 export async function generateWeeklyMealPlan(
@@ -103,7 +143,15 @@ export async function generateWeeklyMealPlan(
 
   const foodConstraints = buildFoodConstraints(parsedProfile.data);
   const bmi = calculateBmi(parsedProfile.data.heightCm, parsedProfile.data.weightKg);
-  const weekStartDate = getSeoulWeekStartDate(new Date());
+  const now = new Date();
+  const weekStartDate = getSeoulWeekStartDate(now);
+  const todayDate = getSeoulDateString(now);
+  const pastMealPlanDays = await loadPastMealPlanDays(
+    supabase,
+    userId,
+    weekStartDate,
+    todayDate,
+  );
 
   const generatedMealPlan = await generateStructuredMealPlan({
     weekStartDate,
@@ -136,6 +184,35 @@ export async function generateWeeklyMealPlan(
     throw new Error("생성된 식단표 검증에 실패했습니다.");
   }
 
+  const pastMealPlanDaysByDate = new Map(
+    pastMealPlanDays.map((day) => [day.date, day]),
+  );
+  const mergedMealPlanDays = validatedMealPlan.data.days.map((day) => {
+    const preservedDay = pastMealPlanDaysByDate.get(day.date);
+
+    if (!preservedDay) {
+      return {
+        dayIndex: day.dayIndex,
+        date: day.date,
+        breakfast: day.breakfast as Json,
+        lunch: day.lunch as Json,
+        dinner: day.dinner as Json,
+        snack: (day.snack ?? null) as Json,
+        explanation: day.explanation ?? null,
+      };
+    }
+
+    return {
+      dayIndex: preservedDay.day_index,
+      date: preservedDay.date,
+      breakfast: preservedDay.breakfast,
+      lunch: preservedDay.lunch,
+      dinner: preservedDay.dinner,
+      snack: preservedDay.snack,
+      explanation: preservedDay.explanation,
+    };
+  });
+
   const { data: insertedPlan, error: insertPlanError } = await supabase
     .from("meal_plans")
     .insert({
@@ -154,7 +231,7 @@ export async function generateWeeklyMealPlan(
   }
 
   const { error: insertDaysError } = await supabase.from("meal_plan_days").insert(
-    validatedMealPlan.data.days.map((day) => ({
+    mergedMealPlanDays.map((day) => ({
       user_id: userId,
       meal_plan_id: insertedPlan.id,
       day_index: day.dayIndex,
